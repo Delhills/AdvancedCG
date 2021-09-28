@@ -24,6 +24,9 @@ public:
 	static Application* instance;
 
 	std::vector< SceneNode* > node_list;
+	std::vector< Light* > light_list;
+
+	Skybox* sky;
 
 	//window
 	SDL_Window* window;
@@ -60,6 +63,9 @@ public:
 	void onGamepadButtonUp(SDL_JoyButtonEvent event);
 	void onResize(int width, int height);
 	void onFileChanged(const char* filename);
+
+	//skybox
+	void renderSkybox(Texture* skybox, Camera* camera);
 };
 
 

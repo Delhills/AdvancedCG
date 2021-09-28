@@ -65,3 +65,39 @@ void SceneNode::renderInMenu()
 		ImGui::TreePop();
 	}
 }
+
+Light::Light()
+{
+	color = vec3(1.0f, 1.0f, 1.0f);
+	intensity = 1.0f;
+	max_distance = 10.0f;
+
+	diffuse = vec3(1.0f, 1.0f, 1.0f);
+	specular = vec3(0.5f, 0.5f, 0.5f);
+}
+
+void Light::renderInMenu()
+{
+	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
+}
+
+void Light::uploadLightParams(Shader* sh, bool linearize, float& hdr_gamma)
+{
+
+}
+
+Skybox::Skybox()
+{
+	mesh = Mesh::Get("data/meshes/box.ASE");
+	material = new StandardMaterial();
+	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/skybox.fs");
+	HDRE* sky = HDRE::Get("data/environments/pisa.hdre");
+	material->texture = new Texture();
+	material->texture->cubemapFromHDRE(sky);
+}
+
+void Skybox::render(Camera* camera)
+{
+	model.setTranslation(camera->eye.x, camera->eye.y, camera->eye.z);
+	material->render(mesh, model, camera);
+}
