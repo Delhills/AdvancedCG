@@ -138,6 +138,10 @@ void PhongMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 void PhongMaterial::renderInMenu()
 {
 	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Ambient", (float*)&ambient); // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Diffuse", (float*)&diffuse); // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Specular", (float*)&specular); // Edit 3 floats representing a color
+	ImGui::DragFloat("Shininess", (float*)&shininess, 1.0f, 1.0f, 256.f);
 }
 
 WireframeMaterial::WireframeMaterial()
@@ -167,5 +171,48 @@ void WireframeMaterial::render(Mesh* mesh, Matrix44 model, Camera * camera)
 		mesh->render(GL_TRIANGLES);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+}
+
+ReflectiveMaterial::ReflectiveMaterial()
+{
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/reflective.fs");
+	texture = Application::instance->sky->material->texture;
+}
+
+ReflectiveMaterial::~ReflectiveMaterial()
+{
+}
+
+void ReflectiveMaterial::setUniforms(Camera* camera, Matrix44 model)
+{
+	//upload node uniforms
+	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
+	shader->setUniform("u_camera_position", camera->eye);
+	shader->setUniform("u_model", model);
+	shader->setUniform("u_time", Application::instance->time);
+	shader->setUniform("u_output", Application::instance->output);
+
+	shader->setUniform("u_color", color);
+	shader->setUniform("u_exposure", Application::instance->scene_exposure);
+
+	shader->setUniform("u_environment_texture", texture);
+}
+
+void ReflectiveMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
+{
+	if (mesh && shader)
+	{
+		//enable shader
+		shader->enable();
+
+		//upload uniforms
+		setUniforms(camera, model);
+
+		//do the draw call
+		mesh->render(GL_TRIANGLES);
+
+		//disable shader
+		shader->disable();
 	}
 }

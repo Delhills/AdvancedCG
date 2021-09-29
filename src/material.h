@@ -46,6 +46,16 @@ public:
 	void renderInMenu();
 };
 
+class ReflectiveMaterial : public Material {
+public:
+
+	ReflectiveMaterial();
+	~ReflectiveMaterial();
+
+	void setUniforms(Camera* camera, Matrix44 model);
+	void render(Mesh* mesh, Matrix44 model, Camera* camera);
+};
+
 class WireframeMaterial : public StandardMaterial {
 public:
 

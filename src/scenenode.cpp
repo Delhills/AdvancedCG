@@ -91,7 +91,7 @@ Skybox::Skybox()
 	mesh = Mesh::Get("data/meshes/box.ASE");
 	material = new StandardMaterial();
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/skybox.fs");
-	HDRE* sky = HDRE::Get("data/environments/pisa.hdre");
+	HDRE* sky = HDRE::Get("data/environments/panorama.hdre");
 	material->texture = new Texture();
 	material->texture->cubemapFromHDRE(sky);
 }
