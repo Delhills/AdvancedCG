@@ -178,6 +178,7 @@ ReflectiveMaterial::ReflectiveMaterial()
 {
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/reflective.fs");
 	texture = Application::instance->sky->material->texture;
+	reflectivity = 0.0;
 }
 
 ReflectiveMaterial::~ReflectiveMaterial()
@@ -197,6 +198,7 @@ void ReflectiveMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_exposure", Application::instance->scene_exposure);
 
 	shader->setUniform("u_environment_texture", texture);
+	shader->setUniform("u_reflectivity", reflectivity);
 }
 
 void ReflectiveMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
@@ -215,4 +217,9 @@ void ReflectiveMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		//disable shader
 		shader->disable();
 	}
+}
+
+void ReflectiveMaterial::renderInMenu()
+{
+	ImGui::DragFloat("Reflectivity", (float*)&reflectivity, 1.0f, 0.0f, 10.f);
 }

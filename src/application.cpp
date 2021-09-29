@@ -50,13 +50,7 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		Light* light = new Light();
 		light_list.push_back(light);
 
-		PhongMaterial* mat = new PhongMaterial();
 		SceneNode* node = new SceneNode("Visible node");
-		node->mesh = Mesh::Get("data/models/helmet/helmet.obj");
-		//node->model.scale(5, 5, 5);
-		node->material = mat;
-		mat->texture = Texture::Get("data/models/helmet/albedo.png");
-		mat->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
 		node_list.push_back(node);
 	}
 	

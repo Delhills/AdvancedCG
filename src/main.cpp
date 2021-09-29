@@ -115,6 +115,9 @@ void renderGUI(SDL_Window* window, Application * game)
 		{
 			unsigned int count = 0;
 			std::stringstream ss;
+
+			game->sky->renderInMenu();
+
 			for (auto& node : game->node_list)
 			{
 				ss << count;
