@@ -27,7 +27,7 @@ void StandardMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_exposure", Application::instance->scene_exposure);
 
 	if (texture)
-		shader->setUniform("u_texture", texture);
+		shader->setUniform("u_texture", texture[0]);
 }
 
 void StandardMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
@@ -81,7 +81,10 @@ void PhongMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_exposure", Application::instance->scene_exposure);
 
 	if (texture)
-		shader->setUniform("u_texture", texture);
+	{
+		shader->setUniform("u_texture", texture[0]);
+		shader->setUniform("u_texture_normals", texture[1]);
+	}
 
 	shader->setUniform("material_ambient", ambient);
 	shader->setUniform("material_diffuse", diffuse);
@@ -116,14 +119,15 @@ void PhongMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 				shader->setVector3("light_ambient", Vector3(0, 0, 0));
 			}
 
-			light->model.translate(0.0f, 0.0f, 10.0f);
+			//light->model.translate(0.0f, 0.0f, 10.0f);
 			shader->setUniform("light_position", light->model * vec3(0.0f, 0.0f, 0.0f));
 			shader->setUniform("light_diffuse", light->diffuse);
 			shader->setUniform("light_specular", light->specular);
+			shader->setUniform("light_intensity", light->intensity); 
+			shader->setUniform("u_light_maxdist", light->max_distance);
 
 			mesh->render(GL_TRIANGLES);
 		}
-
 
 		mesh->render(GL_TRIANGLES);
 
@@ -177,7 +181,7 @@ void WireframeMaterial::render(Mesh* mesh, Matrix44 model, Camera * camera)
 ReflectiveMaterial::ReflectiveMaterial()
 {
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/reflective.fs");
-	texture = Application::instance->sky->material->texture;
+	texture[0] = Application::instance->sky->material->texture[0];
 	reflectivity = 0.0;
 }
 
@@ -197,7 +201,7 @@ void ReflectiveMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_color", color);
 	shader->setUniform("u_exposure", Application::instance->scene_exposure);
 
-	shader->setUniform("u_environment_texture", texture);
+	shader->setUniform("u_environment_texture", texture[0]);
 	shader->setUniform("u_reflectivity", reflectivity);
 }
 

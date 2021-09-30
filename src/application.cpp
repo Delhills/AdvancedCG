@@ -78,6 +78,8 @@ void Application::render(void)
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
+	//Ordenar por distancia
+
 	for (size_t i = 0; i < node_list.size(); i++) {
 		node_list[i]->render(camera);
 

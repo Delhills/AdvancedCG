@@ -118,6 +118,19 @@ void renderGUI(SDL_Window* window, Application * game)
 
 			game->sky->renderInMenu();
 
+			for (auto& node : game->light_list)
+			{
+				ss << count;
+				if (ImGui::TreeNode(node->name.c_str()))
+				{
+					node->renderInMenu();
+					ImGui::TreePop();
+				}
+				++count;
+				ss.str("");
+			}
+			ImGui::TreePop();
+
 			for (auto& node : game->node_list)
 			{
 				ss << count;

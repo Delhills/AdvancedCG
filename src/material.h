@@ -11,7 +11,7 @@ class Material {
 public:
 
 	Shader* shader = NULL;
-	Texture* texture = NULL;
+	Texture* texture[2] = {};
 	vec4 color;
 
 	virtual void setUniforms(Camera* camera, Matrix44 model) = 0;

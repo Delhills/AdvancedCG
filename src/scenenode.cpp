@@ -14,7 +14,8 @@ SceneNode::SceneNode()
 	mesh = Mesh::Get("data/meshes/sphere.obj");
 
 	material = new PhongMaterial();
-	material->texture = Texture::Get("data/models/ball/albedo.png");
+	material->texture[0] = Texture::Get("data/models/ball/albedo.png");
+	material->texture[1] = Texture::Get("data/models/ball/normal.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
 }
 
@@ -25,7 +26,8 @@ SceneNode::SceneNode(const char * name)
 	mesh = Mesh::Get("data/meshes/sphere.obj");
 
 	material = new PhongMaterial();
-	material->texture = Texture::Get("data/models/ball/albedo.png");
+	material->texture[0] = Texture::Get("data/models/ball/albedo.png");
+	material->texture[1] = Texture::Get("data/models/ball/normal.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
 }
 
@@ -89,11 +91,11 @@ void SceneNode::renderInMenu()
 		{
 			switch (mesh_selected)
 			{
-			case 0: mesh = Mesh::Get("data/meshes/sphere.obj"); material->texture = Texture::Get("data/models/ball/albedo.png"); break;
-			case 1: mesh = Mesh::Get("data/meshes/box.ASE"); material->texture = Texture::Get("data/models/basic/albedo.png"); break;
-			case 2: mesh = Mesh::Get("data/models/helmet/helmet.obj"); material->texture = Texture::Get("data/models/helmet/albedo.png"); break;
-			case 3: mesh = Mesh::Get("data/models/bench/bench.obj"); material->texture = Texture::Get("data/models/bench/albedo.png"); break;
-			case 4: mesh = Mesh::Get("data/models/lantern/lantern.obj"); material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
+			case 0: mesh = Mesh::Get("data/meshes/sphere.obj"); material->texture[0] = Texture::Get("data/models/ball/albedo.png"); material->texture[1] = Texture::Get("data/models/ball/normal.png"); break;
+			case 1: mesh = Mesh::Get("data/meshes/box.ASE"); material->texture[0] = Texture::Get("data/models/basic/albedo.png"); material->texture[1] = Texture::Get("data/models/basic/normal.png"); break;
+			case 2: mesh = Mesh::Get("data/models/helmet/helmet.obj"); material->texture[0] = Texture::Get("data/models/helmet/albedo.png"); material->texture[1] = Texture::Get("data/models/helmet/normal.png"); break;
+			case 3: mesh = Mesh::Get("data/models/bench/bench.obj"); material->texture[0] = Texture::Get("data/models/bench/albedo.png"); material->texture[1] = Texture::Get("data/models/bench/normal.png"); break;
+			case 4: mesh = Mesh::Get("data/models/lantern/lantern.obj"); material->texture[0] = Texture::Get("data/models/lantern/albedo.png"); material->texture[1] = Texture::Get("data/models/lantern/normal.png"); break;
 			}
 
 		}
@@ -113,7 +115,15 @@ Light::Light()
 
 void Light::renderInMenu()
 {
-	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
+	ImGui::DragFloat("Intensity", (float*)&intensity, 0.1f, 0.0f, 10.0f);
+	ImGui::DragFloat("Distance", (float*)&max_distance, 1.0f, 0.0f, 1000.0f);
+
+	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+	ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
+	ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
+	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
+
+	ImGui::TreePop();
 }
 
 void Light::uploadLightParams(Shader* sh, bool linearize, float& hdr_gamma)
@@ -129,8 +139,8 @@ Skybox::Skybox()
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/skybox.fs");
 	
 	HDRE* sky = HDRE::Get("data/environments/panorama.hdre");
-	material->texture = new Texture();
-	material->texture->cubemapFromHDRE(sky);
+	material->texture[0] = new Texture();
+	material->texture[0]->cubemapFromHDRE(sky);
 }
 
 void Skybox::render(Camera* camera)
@@ -153,12 +163,12 @@ void Skybox::renderInMenu()
 		case 2: sky = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
 		case 3: sky = HDRE::Get("data/environments/studio.hdre"); break;
 		case 4: sky = HDRE::Get("data/environments/tv_studio.hdre"); break;
-		case 5: material->texture->cubemapFromImages("data/environments/city"); break;
-		case 6: material->texture->cubemapFromImages("data/environments/dragonvale"); break;
-		case 7:  material->texture->cubemapFromImages("data/environments/snow"); break;
+		case 5: material->texture[0]->cubemapFromImages("data/environments/city"); break;
+		case 6: material->texture[0]->cubemapFromImages("data/environments/dragonvale"); break;
+		case 7:  material->texture[0]->cubemapFromImages("data/environments/snow"); break;
 		}
 		//material->texture = new Texture();
 		if (environment_selected < 5)
-			material->texture->cubemapFromHDRE(sky);
+			material->texture[0]->cubemapFromHDRE(sky);
 	}
 }
