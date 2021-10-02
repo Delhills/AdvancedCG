@@ -100,6 +100,7 @@ void renderGUI(SDL_Window* window, Application * game)
 		ImGui::Text(getGPUStats().c_str());					   // Display some text (you can use a format strings too)
 		
 		if (ImGui::TreeNode("Scene")) {
+			ImGui::ColorEdit3("Ambient Light", (float*)&game->ambient_light); // Edit 3 floats representing a color
 			ImGui::DragFloat("Exposure", &Application::instance->scene_exposure, 0.01f,-2, 2);
 			ImGui::Combo("Output", &Application::instance->output, "COMPLETE\0ALBEDO\0ROUGHNESS\0\METALNESS\0NORMALS\0");
 			ImGui::TreePop();
@@ -116,6 +117,24 @@ void renderGUI(SDL_Window* window, Application * game)
 			unsigned int count = 0;
 			std::stringstream ss;
 
+			bool new_light = false;
+			new_light |= ImGui::Checkbox("Add Light", &game->new_light);
+			if (new_light)
+			{
+				Light* light = new Light();
+				game->light_list.push_back(light);
+				game->new_light = false;
+			}
+
+			bool new_model = false;
+			new_model |= ImGui::Checkbox("Add Model", &game->new_model);
+			if (new_model)
+			{
+				SceneNode* node = new SceneNode();
+				game->node_list.push_back(node);
+				game->new_model = false;
+			}
+
 			game->sky->renderInMenu();
 
 			for (auto& node : game->light_list)
@@ -129,7 +148,7 @@ void renderGUI(SDL_Window* window, Application * game)
 				++count;
 				ss.str("");
 			}
-			ImGui::TreePop();
+			//ImGui::TreePop();
 
 			for (auto& node : game->node_list)
 			{

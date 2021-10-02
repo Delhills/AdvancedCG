@@ -1,7 +1,7 @@
 varying vec3 v_world_position;
 varying vec3 v_normal;
 
-uniform samplerCube u_environment_texture;
+uniform samplerCube u_texture;
 uniform vec3 u_camera_position;
 
 void main()
@@ -12,6 +12,6 @@ void main()
 	vec3 R = reflect(-V,N);
 
 	//compute the reflection
-	vec3 reflection = textureCube( u_environment_texture, R ).xyz;
+	vec3 reflection = textureCube( u_texture, R ).xyz;
 	gl_FragColor = vec4(reflection, 1.0);
 }

@@ -35,6 +35,8 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	scene_exposure = 1;
 	output = 0;
 
+	std::cout << SceneNode::lastNameId << std::endl;
+
 	// OpenGL flags
 	glEnable( GL_CULL_FACE ); //render both sides of every triangle
 	glEnable( GL_DEPTH_TEST ); //check the occlusions using the Z buffer
@@ -44,13 +46,15 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
-	sky = new Skybox();
-
 	{
+		ambient_light = Vector3(0.5, 0.5, 0.5);
+
+		sky = new Skybox();
+
 		Light* light = new Light();
 		light_list.push_back(light);
 
-		SceneNode* node = new SceneNode("Visible node");
+		SceneNode* node = new SceneNode();
 		node_list.push_back(node);
 	}
 	

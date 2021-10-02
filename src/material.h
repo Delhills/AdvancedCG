@@ -11,7 +11,7 @@ class Material {
 public:
 
 	Shader* shader = NULL;
-	Texture* texture[2] = {};
+	Texture* texture = NULL;
 	vec4 color;
 
 	virtual void setUniforms(Camera* camera, Matrix44 model) = 0;
@@ -30,7 +30,7 @@ public:
 	void renderInMenu();
 };
 
-class PhongMaterial : public Material {
+class PhongMaterial : public StandardMaterial {
 public:
 
 	Vector3 ambient;
@@ -46,17 +46,11 @@ public:
 	void renderInMenu();
 };
 
-class ReflectiveMaterial : public Material {
+class ReflectiveMaterial : public StandardMaterial {
 public:
-
-	float reflectivity;
 
 	ReflectiveMaterial();
 	~ReflectiveMaterial();
-
-	void setUniforms(Camera* camera, Matrix44 model);
-	void render(Mesh* mesh, Matrix44 model, Camera* camera);
-	void renderInMenu();
 };
 
 class WireframeMaterial : public StandardMaterial {

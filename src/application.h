@@ -26,7 +26,12 @@ public:
 	std::vector< SceneNode* > node_list;
 	std::vector< Light* > light_list;
 
+	bool new_light = false;
+	bool new_model = false;
+
 	Skybox* sky;
+
+	Vector3 ambient_light;
 
 	//window
 	SDL_Window* window;

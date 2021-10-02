@@ -34,17 +34,13 @@ class Light : public SceneNode
 {
 public:
 
-	Vector3 color;
-	float intensity;
-	float max_distance;
+	static unsigned int lastLightId;
 
 	Vector3 diffuse;
 	Vector3 specular;
 
 	Light();
-	virtual void renderInMenu();
-	void uploadLightParams(Shader* sh, bool linearize, float& hdr_gamma);
-
+	void renderInMenu();
 };
 
 class Skybox : public SceneNode
