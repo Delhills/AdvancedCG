@@ -23,15 +23,16 @@ class Application
 public:
 	static Application* instance;
 
-	std::vector< SceneNode* > node_list;
-	std::vector< Light* > light_list;
+	std::vector< SceneNode* > node_list; //List for al the scene nodes
+	std::vector< Light* > light_list; //List for al the scene lights
 
+	//Varibles to add new lights and nodes
 	bool new_light = false;
 	bool new_model = false;
 
-	Skybox* sky;
+	Skybox* sky; //The actual skybox
 
-	Vector3 ambient_light;
+	Vector3 ambient_light; //Ambient light vector
 
 	//window
 	SDL_Window* window;

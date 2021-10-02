@@ -6,12 +6,12 @@
 StandardMaterial::StandardMaterial()
 {
 	color = vec4(1.f, 1.f, 1.f, 1.f);
-	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs"); //Textured shader predetermined
 }
 
 StandardMaterial::~StandardMaterial()
 {
-	shader->~Shader();
+	shader->~Shader(); //Destroy the shader
 }
 
 void StandardMaterial::setUniforms(Camera* camera, Matrix44 model)
@@ -55,9 +55,9 @@ void StandardMaterial::renderInMenu()
 
 PhongMaterial::PhongMaterial()
 {
+	//Setting the default parameters
 	color = vec4(1.f, 1.f, 1.f, 1.f);
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
-
 	ambient = vec3(1.f, 1.f, 1.f);
 	diffuse = vec3(1.f, 1.f, 1.f);
 	specular = vec3(1.f, 1.f, 1.f);
@@ -66,6 +66,7 @@ PhongMaterial::PhongMaterial()
 
 PhongMaterial::~PhongMaterial()
 {
+	//Destroy stored data
 	texture->~Texture();
 	shader->~Shader();
 }
@@ -75,6 +76,7 @@ void PhongMaterial::setUniforms(Camera* camera, Matrix44 model)
 	//upload node uniforms
 	StandardMaterial::setUniforms(camera, model);
 
+	//Upload material related uniforms
 	shader->setUniform("u_material_ambient", ambient);
 	shader->setUniform("u_material_diffuse", diffuse);
 	shader->setUniform("u_material_specular", specular);
@@ -95,25 +97,29 @@ void PhongMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		//upload uniforms
 		setUniforms(camera, model);
 
-		shader->setUniform("u_light_ambient", Application::instance->ambient_light);
+		//MULTI PASS RENDER
+		Vector3 ambient_light = Application::instance->ambient_light;
+		std::vector< Light* > lights = Application::instance->light_list;
 
-		//Recorremos la luces de las escena
-		for (int i = 0; i < Application::instance->light_list.size(); ++i)
+		shader->setUniform("u_light_ambient", Application::instance->ambient_light); //Pass ambient light for the first pass
+
+		//Use all the lights
+		for (int i = 0; i < lights.size(); ++i)
 		{
-			Light* light = Application::instance->light_list[i];
+			Light* light = lights[i];
 
-			if (i != 0) //A partir de la primera luz usamos blending (muti pass)
+			if (i != 0) //Blending on after first pass and no ambient light
 			{
 				glEnable(GL_BLEND);
 				shader->setVector3("u_light_ambient", Vector3(0, 0, 0));
 			}
-
-			//light->model.translate(0.0f, 0.0f, 10.0f);
-			shader->setUniform("u_light_position", light->model * vec3(0.0f, 0.0f, 0.0f));
+			
+			//Pass light parameters
+			shader->setUniform("u_light_position", light->model.getTranslation());
 			shader->setUniform("u_light_diffuse", light->diffuse);
 			shader->setUniform("u_light_specular", light->specular);
 
-			mesh->render(GL_TRIANGLES);
+			mesh->render(GL_TRIANGLES); //Render the mesh for every light
 		}
 
 		//disable shader
@@ -165,10 +171,16 @@ void WireframeMaterial::render(Mesh* mesh, Matrix44 model, Camera * camera)
 
 ReflectiveMaterial::ReflectiveMaterial()
 {
+	//Use reflective shader
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/reflective.fs");
+
+	//Use the skybox cubemap as the texture
 	texture = Application::instance->sky->material->texture;
 }
 
 ReflectiveMaterial::~ReflectiveMaterial()
 {
+	//Destroy stored data
+	shader->~Shader();
+	texture->~Texture();
 }
