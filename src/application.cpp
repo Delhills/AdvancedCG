@@ -11,6 +11,7 @@
 #include "extra/imgui/imgui.h"
 #include "extra/imgui/imgui_impl_sdl.h"
 #include "extra/imgui/imgui_impl_opengl3.h"
+#include <algorithm>
 
 #include <cmath>
 
@@ -45,13 +46,29 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
 	{
-		StandardMaterial* mat = new StandardMaterial();
+		ambient_light = Vector3(0.75, 0.75, 0.75);
+		sky = new SkyboxNode();
+
+		LightNode* light = new LightNode();
+
+		light_list.push_back(light);
+
+		PhongMaterial* mat = new PhongMaterial();
 		SceneNode* node = new SceneNode("Visible node");
-		node->mesh = Mesh::Get("data/models/helmet/helmet.obj");
+		node->mesh = Mesh::Get("data/meshes/sphere.obj");
 		//node->model.scale(5, 5, 5);
 		node->material = mat;
-		mat->texture = Texture::Get("data/models/helmet/albedo.png");
-		mat->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+
+		BoundingBox world_bounding = transformBoundingBox(node->model, node->mesh->box);
+
+		if (camera)
+			node->distance_to_cam = camera->eye.distance(world_bounding.center);
+
+		mat->texture = Texture::Get("data/models/ball/albedo.png");
+		if (!mat->shader)
+		{
+			mat->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+		}
 		node_list.push_back(node);
 	}
 	
@@ -71,9 +88,14 @@ void Application::render(void)
 	//set the camera as default
 	camera->enable();
 
+	sky->render(camera);
+
 	//set flags
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
+
+	if (camera)
+		std::sort(node_list.begin(), node_list.end(), compareNodes);
 
 	for (size_t i = 0; i < node_list.size(); i++) {
 		node_list[i]->render(camera);

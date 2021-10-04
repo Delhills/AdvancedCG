@@ -24,10 +24,37 @@ public:
 
 	Mesh* mesh = NULL;
 	Matrix44 model;
+	float distance_to_cam = 0;
 
 	virtual void render(Camera* camera);
 	virtual void renderWireframe(Camera* camera);
 	virtual void renderInMenu();
 };
+
+class LightNode : public SceneNode
+{
+public:
+	Vector3 color;
+	Vector3 diffuseColor;
+	Vector3 specularColor;
+	float intensity;
+	float max_distance;
+
+	LightNode();
+
+	virtual void renderInMenu();
+	void setLightUniforms(Shader* shader);
+
+};
+
+class SkyboxNode : public SceneNode
+{
+public:
+
+	SkyboxNode();
+	void render(Camera* camera);
+	void renderInMenu();
+};
+
 
 #endif

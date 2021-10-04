@@ -30,6 +30,22 @@ public:
 	void renderInMenu();
 };
 
+class PhongMaterial : public StandardMaterial {
+public:
+
+	Vector3 ambient; //reflected ambient light
+	Vector3 diffuse; //reflected diffuse light
+	Vector3 specular; //reflected specular light
+	float shininess; //glosiness coefficient (plasticity)
+
+	PhongMaterial();
+	~PhongMaterial();
+
+	virtual void setUniforms(Camera* camera, Matrix44 model);
+	virtual void render(Mesh* mesh, Matrix44 model, Camera* camera);
+	virtual void renderInMenu();
+};
+
 class WireframeMaterial : public StandardMaterial {
 public:
 

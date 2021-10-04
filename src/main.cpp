@@ -115,6 +115,19 @@ void renderGUI(SDL_Window* window, Application * game)
 		{
 			unsigned int count = 0;
 			std::stringstream ss;
+
+			for (auto& light : game->light_list)
+			{
+				ss << count;
+				if (ImGui::TreeNode(light->name.c_str()))
+				{
+					light->renderInMenu();
+					ImGui::TreePop();
+				}
+				++count;
+				ss.str("");
+			}
+
 			for (auto& node : game->node_list)
 			{
 				ss << count;

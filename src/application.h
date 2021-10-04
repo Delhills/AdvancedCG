@@ -23,7 +23,16 @@ class Application
 public:
 	static Application* instance;
 
+	//Scene nodes
 	std::vector< SceneNode* > node_list;
+	std::vector< LightNode* > light_list;
+
+	//ambient light
+	Vector3 ambient_light;
+
+	//skybix
+	SkyboxNode* sky;
+
 
 	//window
 	SDL_Window* window;
