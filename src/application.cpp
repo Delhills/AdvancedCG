@@ -35,8 +35,6 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	scene_exposure = 1;
 	output = 0;
 
-	std::cout << SceneNode::lastNameId << std::endl;
-
 	// OpenGL flags
 	glEnable( GL_CULL_FACE ); //render both sides of every triangle
 	glEnable( GL_DEPTH_TEST ); //check the occlusions using the Z buffer
@@ -82,8 +80,6 @@ void Application::render(void)
 	//set flags
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
-
-	//Ordenar por distancia
 
 	for (size_t i = 0; i < node_list.size(); i++) {
 		node_list[i]->render(camera);
