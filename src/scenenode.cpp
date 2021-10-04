@@ -5,8 +5,6 @@
 
 unsigned int SceneNode::lastNameId = 0;
 unsigned int Light::lastLightId = 0;
-unsigned int mesh_selected = 0;
-unsigned int material_selected = 0;
 unsigned int environment_selected = 0;
 
 SceneNode::SceneNode()
@@ -57,7 +55,7 @@ void SceneNode::renderWireframe(Camera* camera)
 void SceneNode::renderInMenu()
 {
 	//Model edit
-	if (ImGui::TreeNode("Model")) 
+	if (ImGui::TreeNode("Model"))
 	{
 		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
 		ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
@@ -65,7 +63,7 @@ void SceneNode::renderInMenu()
 		ImGui::DragFloat3("Rotation", matrixRotation, 0.1f);
 		ImGui::DragFloat3("Scale", matrixScale, 0.1f);
 		ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
-		
+
 		ImGui::TreePop();
 	}
 
@@ -77,17 +75,37 @@ void SceneNode::renderInMenu()
 		if (changed)
 		{
 			Texture* texture = material->texture;
-
 			switch (material_selected)
 			{
-				case 0: material = new PhongMaterial(); material->texture = texture; break;
-				case 1: material = new ReflectiveMaterial(); break;
-				case 2: material = new StandardMaterial(); material->texture = texture; break;
-				case 3: material = new WireframeMaterial(); break;
+			case 0: material = new PhongMaterial(); material->texture = texture; break;
+			case 1: material = new ReflectiveMaterial(); break;
+			case 2: material = new StandardMaterial(); material->texture = texture; break;
+			case 3: material = new WireframeMaterial(); break;
 			}
+
+			changed = false;
 		}
 
 		material->renderInMenu();
+		ImGui::TreePop();
+	}
+
+	//Texture
+	if (material->texture && ImGui::TreeNode("Texture"))
+	{
+		bool changed = false;
+		changed |= ImGui::Combo("Texture", (int*)&texture_selected, "BALL\0BOX\0BENCH\0HELMET\0LANTERN\0");
+		if (changed)
+		{
+			switch (texture_selected)
+			{
+			case 0: material->texture = Texture::Get("data/models/ball/albedo.png"); break;
+			case 1: material->texture = Texture::Get("data/models/basic/albedo.png"); break;
+			case 2: material->texture = Texture::Get("data/models/bench/albedo.png"); break;
+			case 3: material->texture = Texture::Get("data/models/helmet/albedo.png"); break;
+			case 4: material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
+			}
+		}
 		ImGui::TreePop();
 	}
 
@@ -100,11 +118,11 @@ void SceneNode::renderInMenu()
 		{
 			switch (mesh_selected)
 			{
-			case 0: mesh = Mesh::Get("data/meshes/sphere.obj"); material->texture = Texture::Get("data/models/ball/albedo.png");break;
-			case 1: mesh = Mesh::Get("data/meshes/box.ASE"); material->texture = Texture::Get("data/models/basic/albedo.png"); break;
-			case 2: mesh = Mesh::Get("data/models/helmet/helmet.obj"); material->texture = Texture::Get("data/models/helmet/albedo.png"); break;
-			case 3: mesh = Mesh::Get("data/models/bench/bench.obj"); material->texture = Texture::Get("data/models/bench/albedo.png"); break;
-			case 4: mesh = Mesh::Get("data/models/lantern/lantern.obj"); material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
+			case 0: mesh = Mesh::Get("data/meshes/sphere.obj"); material->texture = Texture::Get("data/models/ball/albedo.png"); texture_selected = 0; break;
+			case 1: mesh = Mesh::Get("data/meshes/box.ASE"); material->texture = Texture::Get("data/models/basic/albedo.png"); texture_selected = 1; break;
+			case 2: mesh = Mesh::Get("data/models/helmet/helmet.obj"); material->texture = Texture::Get("data/models/helmet/albedo.png"); texture_selected = 3; break;
+			case 3: mesh = Mesh::Get("data/models/bench/bench.obj"); material->texture = Texture::Get("data/models/bench/albedo.png"); texture_selected = 2; break;
+			case 4: mesh = Mesh::Get("data/models/lantern/lantern.obj"); material->texture = Texture::Get("data/models/lantern/albedo.png"); texture_selected = 4; break;
 			}
 
 		}

@@ -117,22 +117,16 @@ void renderGUI(SDL_Window* window, Application * game)
 			unsigned int count = 0;
 			std::stringstream ss;
 
-			bool new_light = false;
-			new_light |= ImGui::Checkbox("Add Light", &game->new_light);
-			if (new_light)
+			if (ImGui::Button("Add Light", ImVec2(200.0, 20.0)))
 			{
 				Light* light = new Light();
 				game->light_list.push_back(light);
-				game->new_light = false;
 			}
 
-			bool new_model = false;
-			new_model |= ImGui::Checkbox("Add Model", &game->new_model);
-			if (new_model)
+			if (ImGui::Button("Add Model", ImVec2(200.0, 20.0)))
 			{
 				SceneNode* node = new SceneNode();
 				game->node_list.push_back(node);
-				game->new_model = false;
 			}
 
 			game->sky->renderInMenu();
