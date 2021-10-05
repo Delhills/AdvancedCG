@@ -7,7 +7,6 @@ uniform vec3 u_camera_position;
 void main()
 {
 	vec3 N = normalize(v_normal);
-
 	vec3 V = normalize(u_camera_position - v_world_position);
 	vec3 R = reflect(-V,N);
 
