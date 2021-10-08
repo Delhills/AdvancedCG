@@ -46,11 +46,29 @@ public:
 	void renderInMenu();
 };
 
+class TexturedMaterial : public StandardMaterial {
+public:
+
+	TexturedMaterial();
+	~TexturedMaterial();
+};
+
 class ReflectiveMaterial : public StandardMaterial {
 public:
 
 	ReflectiveMaterial();
 	~ReflectiveMaterial();
+
+	void renderInMenu() {}; //Anything to render in menu
+};
+
+class SkyboxMaterial : public StandardMaterial {
+public:
+
+	SkyboxMaterial();
+	~SkyboxMaterial();
+
+	void renderInMenu() {}; //Anything to render in menu
 };
 
 class WireframeMaterial : public StandardMaterial {

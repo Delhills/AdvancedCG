@@ -23,7 +23,7 @@ class Application
 public:
 	static Application* instance;
 
-	std::vector< SceneNode* > node_list; //List for al the scene nodes
+	std::vector< SceneNode* > node_list; //List for al the scene meshes
 	std::vector< Light* > light_list; //List for al the scene lights
 
 	//Varibles to add new lights and nodes

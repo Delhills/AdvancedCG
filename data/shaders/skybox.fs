@@ -1,4 +1,5 @@
 varying vec3 v_world_position;
+varying vec3 v_position;
 
 uniform samplerCube u_texture;
 uniform vec3 u_camera_position;

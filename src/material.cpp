@@ -6,7 +6,7 @@
 StandardMaterial::StandardMaterial()
 {
 	color = vec4(1.f, 1.f, 1.f, 1.f);
-	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs"); //Textured shader predetermined
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/flat.fs");
 }
 
 StandardMaterial::~StandardMaterial()
@@ -108,7 +108,7 @@ void PhongMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		{
 			Light* light = lights[i];
 
-			if (i != 0) //Blending on after first pass and no ambient light
+			if (i == 1) //Blending on after first pass and no ambient light
 			{
 				glEnable(GL_BLEND);
 				shader->setVector3("u_light_ambient", Vector3(0, 0, 0));
@@ -179,6 +179,32 @@ ReflectiveMaterial::ReflectiveMaterial()
 }
 
 ReflectiveMaterial::~ReflectiveMaterial()
+{
+	//Destroy stored data
+	shader->~Shader();
+	texture->~Texture();
+}
+
+TexturedMaterial::TexturedMaterial()
+{
+	color = vec4(1.f, 1.f, 1.f, 1.f);
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+}
+
+TexturedMaterial::~TexturedMaterial()
+{
+	//Destroy stored data
+	shader->~Shader();
+	texture->~Texture();
+}
+
+SkyboxMaterial::SkyboxMaterial()
+{
+	//Use reflective shader
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/skybox.fs");
+}
+
+SkyboxMaterial::~SkyboxMaterial()
 {
 	//Destroy stored data
 	shader->~Shader();

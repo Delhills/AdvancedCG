@@ -79,11 +79,9 @@ void SceneNode::renderInMenu()
 			{
 			case 0: material = new PhongMaterial(); material->texture = texture; break;
 			case 1: material = new ReflectiveMaterial(); break;
-			case 2: material = new StandardMaterial(); material->texture = texture; break;
+			case 2: material = new TexturedMaterial(); material->texture = texture; break;
 			case 3: material = new WireframeMaterial(); break;
 			}
-
-			changed = false;
 		}
 
 		material->renderInMenu();
@@ -165,14 +163,12 @@ Skybox::Skybox()
 	//Set cube as the mesh for the cubemap
 	mesh = Mesh::Get("data/meshes/box.ASE");
 
-	//An standard material will be enough
-	material = new StandardMaterial();
-	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/skybox.fs");
+	//A skybox material 
+	material = new SkyboxMaterial();
 	
 	//Set panorama as the default skybox
-	HDRE* sky = HDRE::Get("data/environments/panorama.hdre");
 	material->texture = new Texture();
-	material->texture->cubemapFromHDRE(sky);
+	material->texture->cubemapFromImages("data/environments/dragonvale");
 
 	//Not adding a node name id
 	lastNameId--;
@@ -190,23 +186,14 @@ void Skybox::render(Camera* camera)
 void Skybox::renderInMenu()
 {
 	bool changed = false;
-	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO\0CITY\0DRAGONVALE\0SNOW\0");
+	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "DRAGONVALE\0CITY\0SNOW\0");
 	if (changed)
 	{
-		HDRE* sky;
 		switch (environment_selected)
 		{
-		case 0: sky = HDRE::Get("data/environments/panorama.hdre"); break;
-		case 1: sky = HDRE::Get("data/environments/pisa.hdre"); break;
-		case 2: sky = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
-		case 3: sky = HDRE::Get("data/environments/studio.hdre"); break;
-		case 4: sky = HDRE::Get("data/environments/tv_studio.hdre"); break;
-		case 5: material->texture->cubemapFromImages("data/environments/city"); break;
-		case 6: material->texture->cubemapFromImages("data/environments/dragonvale"); break;
-		case 7: material->texture->cubemapFromImages("data/environments/snow"); break;
+		case 0: material->texture->cubemapFromImages("data/environments/dragonvale"); break;
+		case 1: material->texture->cubemapFromImages("data/environments/city"); break;
+		case 2: material->texture->cubemapFromImages("data/environments/snow"); break;
 		}
-		//material->texture = new Texture();
-		if (environment_selected < 5)
-			material->texture->cubemapFromHDRE(sky);
 	}
 }
