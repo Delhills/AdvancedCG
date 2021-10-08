@@ -104,6 +104,11 @@ void SceneNode::renderInMenu()
 			case 4: material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
 			}
 		}
+
+		int w = ImGui::GetColumnWidth();
+		float aspect = material->texture->width / (float)material->texture->height;
+		ImGui::Image((void*)(intptr_t)material->texture->texture_id, ImVec2(w / 4, w / 4 * aspect));
+
 		ImGui::TreePop();
 	}
 
