@@ -117,18 +117,21 @@ void renderGUI(SDL_Window* window, Application * game)
 			unsigned int count = 0;
 			std::stringstream ss;
 
+			//Add light to the scene
 			if (ImGui::Button("Add Light", ImVec2(200.0, 20.0)))
 			{
 				Light* light = new Light();
 				game->light_list.push_back(light);
 			}
 
-			if (ImGui::Button("Add Model", ImVec2(200.0, 20.0)))
+			//Add mesh to the scene
+			if (ImGui::Button("Add Mesh", ImVec2(200.0, 20.0)))
 			{
 				SceneNode* node = new SceneNode();
 				game->node_list.push_back(node);
 			}
 
+			//Configure skybox
 			game->sky->renderInMenu();
 
 			for (auto& node : game->light_list)

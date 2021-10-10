@@ -74,13 +74,24 @@ void SceneNode::renderInMenu()
 		changed |= ImGui::Combo("Material Type", (int*)&material_selected, "PHONG\0REFLECTIVE\0TEXTURED\0WIREFRAME\0");
 		if (changed)
 		{
-			Texture* texture = material->texture;
 			switch (material_selected)
 			{
-			case 0: material = new PhongMaterial(); material->texture = texture; break;
+			case 0: material = new PhongMaterial(); break;
 			case 1: material = new ReflectiveMaterial(); break;
-			case 2: material = new TexturedMaterial(); material->texture = texture; break;
+			case 2: material = new TexturedMaterial(); break;
 			case 3: material = new WireframeMaterial(); break;
+			}
+
+			if (material_selected == 0 || material_selected == 2)
+			{
+				switch (texture_selected)
+				{
+				case 0: material->texture = Texture::Get("data/models/ball/albedo.png"); break;
+				case 1: material->texture = Texture::Get("data/models/basic/albedo.png"); break;
+				case 2: material->texture = Texture::Get("data/models/bench/albedo.png"); break;
+				case 3: material->texture = Texture::Get("data/models/helmet/albedo.png"); break;
+				case 4: material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
+				}
 			}
 		}
 
@@ -104,10 +115,6 @@ void SceneNode::renderInMenu()
 			case 4: material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
 			}
 		}
-
-		int w = ImGui::GetColumnWidth();
-		float aspect = material->texture->width / (float)material->texture->height;
-		ImGui::Image((void*)(intptr_t)material->texture->texture_id, ImVec2(w / 4, w / 4 * aspect));
 
 		ImGui::TreePop();
 	}
