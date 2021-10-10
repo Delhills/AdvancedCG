@@ -71,6 +71,13 @@ void Application::render(void)
 	//set the camera as default
 	camera->enable();
 
+<<<<<<< Updated upstream
+=======
+	//render skybox
+	glDisable(GL_DEPTH_TEST); //Disable depth test
+	sky->render(camera);
+
+>>>>>>> Stashed changes
 	//set flags
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);

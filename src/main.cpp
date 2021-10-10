@@ -115,6 +115,40 @@ void renderGUI(SDL_Window* window, Application * game)
 		{
 			unsigned int count = 0;
 			std::stringstream ss;
+<<<<<<< Updated upstream
+=======
+
+			//Creating and adding a light to the scene
+			if (ImGui::Button("Add Light", ImVec2(200.0, 20.0)))
+			{
+				Light* light = new Light();
+				game->light_list.push_back(light);
+			}
+
+			//Creating and adding a mesh to the scene
+			if (ImGui::Button("Add Mesh", ImVec2(200.0, 20.0)))
+			{
+				SceneNode* node = new SceneNode();
+				game->node_list.push_back(node);
+			}
+
+			//Configure skybox
+			game->sky->renderInMenu();
+
+			for (auto& node : game->light_list)
+			{
+				ss << count;
+				if (ImGui::TreeNode(node->name.c_str()))
+				{
+					node->renderInMenu();
+					ImGui::TreePop();
+				}
+				++count;
+				ss.str("");
+			}
+			//ImGui::TreePop();
+
+>>>>>>> Stashed changes
 			for (auto& node : game->node_list)
 			{
 				ss << count;
