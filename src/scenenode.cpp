@@ -182,8 +182,14 @@ Skybox::Skybox()
 	
 	//Set panorama as the default skybox
 	material->texture = new Texture();
-	HDRE* hdre = HDRE::Get("data/environments/tv_studio.hdre");
+	HDRE* hdre = HDRE::Get("data/environments/studio.hdre");
+
 	material->texture->cubemapFromHDRE(hdre, 0);
+	((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 0);
+	((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 1);
+	((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 2);
+	((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 3);
+	((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 4);
 
 	//Not adding a node name id
 	lastNameId--;

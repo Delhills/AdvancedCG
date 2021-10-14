@@ -202,6 +202,12 @@ SkyboxMaterial::SkyboxMaterial()
 {
 	//Use reflective shader
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/skybox.fs");
+
+	texture_prem_0 = new Texture();
+	texture_prem_1 = new Texture();
+	texture_prem_2 = new Texture();
+	texture_prem_3 = new Texture();
+	texture_prem_4 = new Texture();
 }
 
 SkyboxMaterial::~SkyboxMaterial()
@@ -218,19 +224,6 @@ PBRMaterial::PBRMaterial()
 	metallic_roughness_texture = Texture::Get("data/models/helmet/roughness.png");
 	emissive_texture = Texture::Get("data/models/helmet/emissive.png");
 	BRDFlut = Texture::Get("data/brdfLUT.png");
-
-	texture_prem_0 = new Texture();
-	texture_prem_1 = new Texture();
-	texture_prem_2 = new Texture();
-	texture_prem_3 = new Texture();
-	texture_prem_4 = new Texture();
-
-	HDRE* hdre = HDRE::Get("data/environments/tv_studio.hdre");
-	texture_prem_0->cubemapFromHDRE(hdre, 0);
-	texture_prem_1->cubemapFromHDRE(hdre, 1);
-	texture_prem_2->cubemapFromHDRE(hdre, 2);
-	texture_prem_3->cubemapFromHDRE(hdre, 3);
-	texture_prem_4->cubemapFromHDRE(hdre, 4);
 }
 
 PBRMaterial::~PBRMaterial()
@@ -246,13 +239,14 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_metallic_roughness_texture", metallic_roughness_texture, 3);
 	shader->setUniform("u_ao_texture", ao_texture, 4);
 	shader->setUniform("u_lut", BRDFlut, 5);
-	shader->setUniform("u_environment_texture", Application::instance->sky->material->texture, 6);
 
-	shader->setUniform("u_texture_prem_0", texture_prem_0, 7);
-	shader->setUniform("u_texture_prem_1", texture_prem_1, 8);
-	shader->setUniform("u_texture_prem_2", texture_prem_2, 9);
-	shader->setUniform("u_texture_prem_3", texture_prem_3, 10);
-	shader->setUniform("u_texture_prem_4", texture_prem_4, 11);
+	SkyboxMaterial* sky = (SkyboxMaterial*)Application::instance->sky->material;
+	shader->setUniform("u_environment_texture", sky->texture, 6);
+	shader->setUniform("u_texture_prem_0", sky->texture_prem_0, 7);
+	shader->setUniform("u_texture_prem_1", sky->texture_prem_1, 8);
+	shader->setUniform("u_texture_prem_2", sky->texture_prem_2, 9);
+	shader->setUniform("u_texture_prem_3", sky->texture_prem_3, 10);
+	shader->setUniform("u_texture_prem_4", sky->texture_prem_4, 11);
 }
 
 void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)

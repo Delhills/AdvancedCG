@@ -65,6 +65,12 @@ public:
 class SkyboxMaterial : public StandardMaterial {
 public:
 
+	Texture* texture_prem_0;
+	Texture* texture_prem_1;
+	Texture* texture_prem_2;
+	Texture* texture_prem_3;
+	Texture* texture_prem_4;
+
 	SkyboxMaterial();
 	~SkyboxMaterial();
 
@@ -89,12 +95,6 @@ public:
 	Texture* ao_texture;
 	Texture* emissive_texture;
 	Texture* BRDFlut;
-
-	Texture* texture_prem_0;
-	Texture* texture_prem_1;
-	Texture* texture_prem_2;
-	Texture* texture_prem_3;
-	Texture* texture_prem_4;
 
 	PBRMaterial();
 	~PBRMaterial();

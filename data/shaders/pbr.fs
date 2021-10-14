@@ -194,7 +194,7 @@ void main()
 	// 3. Shade (Direct + Indirect)
 	//read the pixel RGBA from the texture at the position v_position
 	vec3 light = vec3(0.0);
-	light += gamma_to_linear(u_light_ambient) * material.ao;
+	//light += gamma_to_linear(u_light_ambient) * material.ao;
 
 	//Compute vectors
 	vec3 N = material.N;
@@ -207,16 +207,18 @@ void main()
 	float NdotV = max(dot(N,V),0.0);
 	float LdotH = max(dot(L,H),0.0);
 
-	//Diffuse component
-	vec3 f_diff = material.metallic * material.albedo.xyz * RECIPROCAL_PI * NdotL;
-
-	//Specular component
 	vec3 F_0 = vec3(0.04); //common material
 	F_0 = mix( F_0, material.albedo.xyz, material.metallic );
 
-	vec3 F = FresnelSchlickRoughness(LdotH, F_0, material.roughness); //F_0 + (1.0 - F_0)*pow((1.0 - LdotH), 5.0); OKAY
+	vec3 F = compute_F(F_0, LdotH); //F_0 + (1.0 - F_0)*pow((1.0 - LdotH), 5.0); OKAY
 	float D = compute_D(material.roughness, NdotH); //a2 * RECIPROCAL_PI * 1.0 / pow(NdotH * NdotH * (a2 - 1.0) + 1.0, 2.0); //OKAY
 	float G = compute_G(material.roughness, NdotL, NdotV); //(NdotL / (NdotL * (1.0 - k) + k)) * (NdotV / (NdotV * (1.0 - k) + k)); //OKAY
+
+	//Diffuse component
+	vec3 kD = vec3(1.0) - F;
+	vec3 f_diff = (1.0 - material.metallic) * kD * material.albedo.xyz * RECIPROCAL_PI * NdotL;
+
+	//Specular component
 	vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
 
 	vec3 SpecularIBL = vec3(0.0);
@@ -224,21 +226,23 @@ void main()
 	//compute the reflection
 	if (u_ibl)
 	{
+		vec3 F_IBL = FresnelSchlickRoughness(NdotV, F_0, material.roughness);
 		vec3 R = reflect(-V,N);
 		vec2 uv_lut = vec2(NdotV, material.roughness);
 		vec4 brdf2D = texture2D(u_lut, uv_lut);
 
 		vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
-		vec3 SpecularBRDF = F_0 * brdf2D.x + brdf2D.y;
+		vec3 SpecularBRDF = F_IBL * brdf2D.x + brdf2D.y;
 		SpecularIBL = specularSample * SpecularBRDF;
 
-		vec3 diffuseSample = getReflectionColor(R, material.roughness).xyz;
-		vec3 diffueColor = material.albedo.xyz;
-		DiffuseIBL = (diffuseSample * diffueColor) * (1 - F_0);
+		vec3 kD_IBL = vec3(1.0) - F_IBL;
+		vec3 diffuseSample = getReflectionColor(R, 1.0).xyz;
+		vec3 diffuseColor = material.albedo.xyz;
+		DiffuseIBL = (diffuseSample * diffuseColor) * kD_IBL;
 	}
 
 	
-	light += (f_diff + f_specular) * u_light_intensity + SpecularIBL + DiffuseIBL; // (vec3(1.0) - F)
+	light += (f_diff + f_specular) * u_light_intensity + (SpecularIBL + DiffuseIBL) * material.ao; // (vec3(1.0) - F)
 	material.albedo.xyz *= light;
 
 	if (u_ibl)
