@@ -23,6 +23,7 @@ uniform vec3 u_light_position;
 uniform vec3 u_light_diffuse;
 uniform vec3 u_light_specular;
 uniform float u_light_intensity;
+uniform float u_light_color;
 
 uniform vec3 u_material_ambient;
 uniform vec3 u_material_diffuse;
@@ -242,7 +243,7 @@ void main()
 	}
 
 	
-	light += (f_diff + f_specular) * u_light_intensity + (SpecularIBL + DiffuseIBL) * material.ao; // (vec3(1.0) - F)
+	light += (f_diff + f_specular) * u_light_intensity * u_light_color + (SpecularIBL + DiffuseIBL) * material.ao; // (vec3(1.0) - F)
 	material.albedo.xyz *= light;
 
 	if (u_ibl)

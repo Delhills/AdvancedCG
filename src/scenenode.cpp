@@ -182,7 +182,7 @@ Skybox::Skybox()
 	
 	//Set panorama as the default skybox
 	material->texture = new Texture();
-	HDRE* hdre = HDRE::Get("data/environments/studio.hdre");
+	HDRE* hdre = HDRE::Get("data/environments/PANORAMA.hdre");
 
 	material->texture->cubemapFromHDRE(hdre, 0);
 	((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 0);
@@ -207,14 +207,24 @@ void Skybox::render(Camera* camera)
 void Skybox::renderInMenu()
 {
 	bool changed = false;
-	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "DRAGONVALE\0CITY\0SNOW\0");
+	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
 	if (changed)
 	{
+		HDRE* hdre;
 		switch (environment_selected)
 		{
-		case 0: material->texture->cubemapFromImages("data/environments/dragonvale"); break;
-		case 1: material->texture->cubemapFromImages("data/environments/city"); break;
-		case 2: material->texture->cubemapFromImages("data/environments/snow"); break;
+		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
+		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
+		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
+		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
+		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
 		}
+
+		material->texture->cubemapFromHDRE(hdre, 0);
+		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 0);
+		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 1);
+		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 2);
+		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 3);
+		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 4);
 	}
 }
