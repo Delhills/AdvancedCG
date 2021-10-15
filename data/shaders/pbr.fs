@@ -78,8 +78,6 @@ vec3 getReflectionColor(vec3 r, float roughness)
 	else if(lod < 5.0) color = mix( textureCube(u_texture_prem_3, r), textureCube(u_texture_prem_4, r), lod - 4.0 );
 	else color = textureCube(u_texture_prem_4, r);
 
-	color.rgb = linear_to_gamma(color.rgb);
-
 	return color.rgb;
 }
 
@@ -216,8 +214,8 @@ void main()
 	float G = compute_G(material.roughness, NdotL, NdotV); //(NdotL / (NdotL * (1.0 - k) + k)) * (NdotV / (NdotV * (1.0 - k) + k)); //OKAY
 
 	//Diffuse component
-	vec3 kD = vec3(1.0) - F;
-	vec3 f_diff = (1.0 - material.metallic) * kD * material.albedo.xyz * RECIPROCAL_PI * NdotL;
+	vec3 diffuseColor = (1.0 - material.metallic) * material.albedo.xyz;
+	vec3 f_diff = diffuseColor * RECIPROCAL_PI * NdotL; //(1.0 - material.metallic) * kD * material.albedo.xyz * RECIPROCAL_PI * NdotL;
 
 	//Specular component
 	vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
@@ -237,14 +235,13 @@ void main()
 		SpecularIBL = specularSample * SpecularBRDF;
 
 		vec3 kD_IBL = vec3(1.0) - F_IBL;
-		vec3 diffuseSample = getReflectionColor(R, 1.0).xyz;
-		vec3 diffuseColor = material.albedo.xyz;
+		vec3 diffuseSample = getReflectionColor(N, 1.0).xyz;
 		DiffuseIBL = (diffuseSample * diffuseColor) * kD_IBL;
 	}
 
 	
-	light += (f_diff + f_specular) * u_light_intensity * u_light_color + (SpecularIBL + DiffuseIBL) * material.ao; // (vec3(1.0) - F)
-	material.albedo.xyz *= light;
+	light += (f_diff + f_specular) * u_light_intensity + (SpecularIBL + DiffuseIBL) * material.ao; // (vec3(1.0) - F)
+	material.albedo.xyz = light;
 
 	if (u_ibl)
 		material.albedo.xyz += material.emission.xyz;

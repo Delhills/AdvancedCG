@@ -45,7 +45,6 @@ void main()
 	vec3 V = normalize(v_world_position - u_camera_position);
 	vec4 color = textureCube(u_texture, V);
 
-	color.xyz = gamma_to_linear(color.xyz);
 	color.xyz = toneMapUncharted(color.xyz);
 	color.xyz = linear_to_gamma(color.xyz);
 	gl_FragColor = vec4(color.xyz, 1.0);
