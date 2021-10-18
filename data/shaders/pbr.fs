@@ -14,25 +14,24 @@ uniform sampler2D u_emissive_texture;
 uniform sampler2D u_metallic_roughness_texture;
 uniform sampler2D u_ao_texture;
 uniform sampler2D u_lut;
+uniform sampler2D u_opacity_texture;
+uniform sampler2D u_metallic_texture;
+uniform sampler2D u_roughness_texture;
 uniform samplerCube u_environment_texture;
 uniform mat4 u_model;
 
 //here create uniforms for all the data we need here
-uniform vec3 u_light_ambient;
 uniform vec3 u_light_position;
-uniform vec3 u_light_diffuse;
-uniform vec3 u_light_specular;
 uniform float u_light_intensity;
-uniform float u_light_color;
-
-uniform vec3 u_material_ambient;
-uniform vec3 u_material_diffuse;
-uniform vec3 u_material_specular;
-uniform float u_material_shininess;
+uniform vec3 u_light_color;
 
 uniform vec3 u_camera_position;
 uniform vec4 u_color;
 uniform bool u_ibl;
+uniform float u_metallic_roughness;
+uniform float u_metallic_factor;
+uniform float u_roughness_factor;
+uniform float u_normal_factor;
 
 uniform samplerCube u_texture_prem_0;
 uniform samplerCube u_texture_prem_1;
@@ -48,9 +47,12 @@ struct PBRMat
 	vec4 albedo;
 	vec3 N;
 	vec3 emission;
+	vec3 F_0;
+	vec3 diffuse_color;
 	float roughness;
 	float metallic;
 	float ao;
+	float opacity;
 };
 
 // degamma
@@ -170,12 +172,10 @@ float compute_G(float roughness, float NdotL, float NdotV)
 	return G1 * G2;
 }
 
-void main()
+void getMaterialProperties(inout PBRMat material)
 {
-	// 1. Create Material
-	PBRMat material;
-	
-	// 2. Fill Material
+	material.opacity = texture2D(u_opacity_texture, v_uv).x;
+
 	material.albedo = u_color * texture2D(u_texture, v_uv);
 	material.albedo.xyz = gamma_to_linear(material.albedo.xyz);
 	material.emission.xyz = texture2D(u_emissive_texture, v_uv).xyz;
@@ -183,49 +183,60 @@ void main()
 	
 	vec3 normal = normalize(v_normal);
 	material.N = texture2D(u_normal_texture, v_uv).xyz;
-	material.N = perturbNormal(normal, v_world_position, v_uv, material.N);
+	material.N = mix(normal, perturbNormal(normal, v_world_position, v_uv, material.N), u_normal_factor);
 
-	material.roughness = texture2D(u_metallic_roughness_texture, v_uv).y;
-	material.metallic = texture2D(u_metallic_roughness_texture, v_uv).z;
+	if (u_metallic_roughness == 1.0)
+	{
+		vec2 metallic_roughness = texture2D(u_metallic_roughness_texture, v_uv).yz;
+		material.roughness = metallic_roughness.x * u_roughness_factor;
+		material.metallic = metallic_roughness.y * u_metallic_factor;
+	}
+	else{	
+		material.roughness = texture2D(u_roughness_texture, v_uv).x * u_roughness_factor;
+		material.metallic = texture2D(u_metallic_texture, v_uv).x * u_metallic_factor;
+	}
 
 	material.ao = texture2D(u_ao_texture, v_uv).x;
 
-	// 3. Shade (Direct + Indirect)
-	//read the pixel RGBA from the texture at the position v_position
-	vec3 light = vec3(0.0);
-	//light += gamma_to_linear(u_light_ambient) * material.ao;
+	vec3 F0 = vec3(0.04); //common material
+	material.F_0 = mix( F0, material.albedo.xyz, material.metallic );
 
-	//Compute vectors
-	vec3 N = material.N;
-	vec3 V = normalize(u_camera_position - v_world_position);
-	vec3 L = normalize(u_light_position - v_world_position);
-	vec3 H = normalize(L+V);
+	material.diffuse_color = (1.0 - material.metallic) * material.albedo.xyz; 
+}
 
+void computeVectors(inout vec3 N, inout vec3 L, inout vec3 H, inout vec3 V, PBRMat material)
+{
+	N = material.N;
+	V = normalize(u_camera_position - v_world_position);
+	L = normalize(u_light_position - v_world_position);
+	H = normalize(L+V);
+}
+
+vec3 getPixelColor(vec3 N, vec3 V, vec3 L, vec3 H, PBRMat material)
+{
+	//Compute dot products
 	float NdotL = max(dot(N,L),0.0);
 	float NdotH = max(dot(N,H),0.0);
 	float NdotV = max(dot(N,V),0.0);
 	float LdotH = max(dot(L,H),0.0);
 
-	vec3 F_0 = vec3(0.04); //common material
-	F_0 = mix( F_0, material.albedo.xyz, material.metallic );
-
-	vec3 F = compute_F(F_0, LdotH); //F_0 + (1.0 - F_0)*pow((1.0 - LdotH), 5.0); OKAY
-	float D = compute_D(material.roughness, NdotH); //a2 * RECIPROCAL_PI * 1.0 / pow(NdotH * NdotH * (a2 - 1.0) + 1.0, 2.0); //OKAY
-	float G = compute_G(material.roughness, NdotL, NdotV); //(NdotL / (NdotL * (1.0 - k) + k)) * (NdotV / (NdotV * (1.0 - k) + k)); //OKAY
+	//Compute BRDF elements
+	vec3 F = compute_F(material.F_0, LdotH); 
+	float D = compute_D(material.roughness, NdotH);
+	float G = compute_G(material.roughness, NdotL, NdotV); 
 
 	//Diffuse component
-	vec3 diffuseColor = (1.0 - material.metallic) * material.albedo.xyz;
-	vec3 f_diff = diffuseColor * RECIPROCAL_PI * NdotL; //(1.0 - material.metallic) * kD * material.albedo.xyz * RECIPROCAL_PI * NdotL;
+	vec3 f_diff = material.diffuse_color * RECIPROCAL_PI * NdotL;
 
 	//Specular component
 	vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
 
+	//compute the IBL
 	vec3 SpecularIBL = vec3(0.0);
 	vec3 DiffuseIBL = vec3(0.0);
-	//compute the reflection
 	if (u_ibl)
 	{
-		vec3 F_IBL = FresnelSchlickRoughness(NdotV, F_0, material.roughness);
+		vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
 		vec3 R = reflect(-V,N);
 		vec2 uv_lut = vec2(NdotV, material.roughness);
 		vec4 brdf2D = texture2D(u_lut, uv_lut);
@@ -236,30 +247,46 @@ void main()
 
 		vec3 kD_IBL = vec3(1.0) - F_IBL;
 		vec3 diffuseSample = getReflectionColor(N, 1.0).xyz;
-		DiffuseIBL = (diffuseSample * diffuseColor) * kD_IBL;
+		DiffuseIBL = (diffuseSample * material.diffuse_color) * kD_IBL;
 	}
-
 	
-	light += (f_diff + f_specular) * u_light_intensity + (SpecularIBL + DiffuseIBL) * material.ao; // (vec3(1.0) - F)
-	material.albedo.xyz = light;
+	vec3 direct_light = (f_diff + f_specular) * u_light_intensity * u_light_color; 
+	vec3 indirect_light = (SpecularIBL + DiffuseIBL) * material.ao;
+	vec3 color = direct_light + indirect_light;
 
 	if (u_ibl)
-		material.albedo.xyz += material.emission.xyz;
+		color += material.emission.xyz;
+
+	return color;
+}
+
+
+void main()
+{
+	// 1. Create Material
+	PBRMat material;
+	
+	// 2. Fill Material
+	getMaterialProperties(material);
+
+	// 3. Shade (Direct + Indirect)
+	//Compute vectors
+	vec3 N, V, L, H;
+	computeVectors(N, L, H, V, material);
+
+	//Get pixel color
+	vec3 color = getPixelColor(N, V, L, H, material);
 
 	// 4. Apply Tonemapping
 	// ...
-	material.albedo.xyz = toneMapUncharted(material.albedo.xyz);
+	color = toneMapUncharted(color);
 
 	// 5. Any extra texture to apply after tonemapping
 	// ...
 
 	// Last step: to gamma space
 	// ...
-	material.albedo.xyz = linear_to_gamma(material.albedo.xyz);
+	color = linear_to_gamma(color);
 
-	gl_FragColor = vec4(material.albedo.xyz, 1.0);
+	gl_FragColor = vec4(color, material.opacity);
 }
-
-//	float a = material.roughness * material.roughness;
-//	float a2 = a * a;
-//	float k = pow(material.roughness + 1.0, 2.0) / 8.0;

@@ -43,6 +43,7 @@ public:
 	Vector3 diffuse;
 	Vector3 specular;
 	float intensity;
+	Vector3 color;
 
 	Light();
 	void renderInMenu();

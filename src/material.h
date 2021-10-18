@@ -92,9 +92,16 @@ public:
 
 	Texture* normal_texture;
 	Texture* metallic_roughness_texture;
+	Texture* metallic_texture;
+	Texture* roughness_texture;
 	Texture* ao_texture;
 	Texture* emissive_texture;
+	Texture* opacity_texture;
 	Texture* BRDFlut;
+
+	float roughness;
+	float metalness;
+	float normal;
 
 	PBRMaterial();
 	~PBRMaterial();

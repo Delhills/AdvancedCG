@@ -11,7 +11,7 @@ StandardMaterial::StandardMaterial()
 
 StandardMaterial::~StandardMaterial()
 {
-	shader->~Shader(); //Destroy the shader
+	
 }
 
 void StandardMaterial::setUniforms(Camera* camera, Matrix44 model)
@@ -222,12 +222,27 @@ PBRMaterial::PBRMaterial()
 	normal_texture = Texture::Get("data/models/helmet/normal.png");
 	ao_texture = Texture::Get("data/models/helmet/ao.png");
 	metallic_roughness_texture = Texture::Get("data/models/helmet/roughness.png");
+	metallic_texture = NULL;
+	roughness_texture = NULL;
 	emissive_texture = Texture::Get("data/models/helmet/emissive.png");
+	opacity_texture = Texture::getWhiteTexture();
 	BRDFlut = Texture::Get("data/brdfLUT.png");
+
+	normal = 1.0;
+	roughness = 1.0;
+	metalness = 1.0;
 }
 
 PBRMaterial::~PBRMaterial()
 {
+	normal_texture = NULL;
+	ao_texture = NULL;
+	metallic_roughness_texture = NULL;
+	metallic_texture = NULL;
+	roughness_texture = NULL;
+	emissive_texture = NULL;
+	opacity_texture = NULL;
+	BRDFlut = NULL;
 }
 
 void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
@@ -236,7 +251,18 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 
 	shader->setUniform("u_normal_texture", normal_texture, 1);
 	shader->setUniform("u_emissive_texture", emissive_texture, 2);
-	shader->setUniform("u_metallic_roughness_texture", metallic_roughness_texture, 3);
+	if (metallic_roughness_texture)
+	{
+		shader->setUniform("u_metallic_roughness_texture", metallic_roughness_texture, 3);
+		shader->setUniform("u_metallic_roughness", 1.0);
+	}
+	else
+	{
+		shader->setUniform("u_metallic_roughness", 0.0);
+		shader->setUniform("u_roughness_texture", roughness_texture, 12);
+		shader->setUniform("u_metallic_texture", metallic_texture, 13);
+	}
+	shader->setUniform("u_opacity_texture", opacity_texture, 14);
 	shader->setUniform("u_ao_texture", ao_texture, 4);
 	shader->setUniform("u_lut", BRDFlut, 5);
 
@@ -247,6 +273,10 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_texture_prem_2", sky->texture_prem_2, 9);
 	shader->setUniform("u_texture_prem_3", sky->texture_prem_3, 10);
 	shader->setUniform("u_texture_prem_4", sky->texture_prem_4, 11);
+
+	shader->setUniform("u_metallic_factor", metalness);
+	shader->setUniform("u_roughness_factor", roughness);
+	shader->setUniform("u_normal_factor", normal);
 }
 
 void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
@@ -255,7 +285,8 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 	{
 		//Establecemos un multi pass render
 		glDepthFunc(GL_LEQUAL);
-		glBlendFunc(GL_ONE, GL_ONE);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		//enable shader
 		shader->enable();
@@ -264,10 +295,8 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		setUniforms(camera, model);
 
 		//MULTI PASS RENDER
-		Vector3 ambient_light = Application::instance->ambient_light;
 		std::vector< Light* > lights = Application::instance->light_list;
 
-		shader->setUniform("u_light_ambient", Application::instance->ambient_light); //Pass ambient light for the first pass
 		shader->setUniform("u_ibl", true);
 
 		//Use all the lights
@@ -277,7 +306,7 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 
 			if (i == 1) //Blending on after first pass and no ambient light
 			{
-				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				shader->setVector3("u_light_ambient", Vector3(0, 0, 0));
 				int ibl = 0;
 				shader->setUniform("u_ibl", ibl);
@@ -285,9 +314,8 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 
 			//Pass light parameters
 			shader->setUniform("u_light_position", light->model.getTranslation());
-			shader->setUniform("u_light_diffuse", light->diffuse);
-			shader->setUniform("u_light_specular", light->specular);
 			shader->setUniform("u_light_intensity", light->intensity);
+			shader->setUniform("u_light_color", light->color);
 
 			mesh->render(GL_TRIANGLES); //Render the mesh for every light
 		}
@@ -302,4 +330,7 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 
 void PBRMaterial::renderInMenu()
 {
+	ImGui::DragFloat("Metalness", (float*)&metalness, 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat("Roughness", (float*)&roughness, 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat("Normal Scale", (float*)&normal, 0.01f, -1.0f, 2.0f);
 }
