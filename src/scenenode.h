@@ -15,6 +15,10 @@ public:
 
 	static unsigned int lastNameId;
 
+	unsigned int mesh_selected = 0;
+	unsigned int material_selected = 0;
+	unsigned int texture_selected = 0;
+
 	SceneNode();
 	SceneNode(const char* name);
 	~SceneNode();
@@ -30,4 +34,26 @@ public:
 	virtual void renderInMenu();
 };
 
+class Light : public SceneNode
+{
+public:
+
+	static unsigned int lastLightId;
+
+	Vector3 diffuse;
+	Vector3 specular;
+	float intensity;
+
+	Light();
+	void renderInMenu();
+};
+
+class Skybox : public SceneNode
+{
+public:
+
+	Skybox();
+	void render(Camera* camera);
+	void renderInMenu();
+};
 #endif

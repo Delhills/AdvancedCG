@@ -100,6 +100,7 @@ void renderGUI(SDL_Window* window, Application * game)
 		ImGui::Text(getGPUStats().c_str());					   // Display some text (you can use a format strings too)
 		
 		if (ImGui::TreeNode("Scene")) {
+			ImGui::ColorEdit3("Ambient Light", (float*)&game->ambient_light); // Edit 3 floats representing a color
 			ImGui::DragFloat("Exposure", &Application::instance->scene_exposure, 0.01f,-2, 2);
 			ImGui::Combo("Output", &Application::instance->output, "COMPLETE\0ALBEDO\0ROUGHNESS\0\METALNESS\0NORMALS\0");
 			ImGui::TreePop();
@@ -115,17 +116,15 @@ void renderGUI(SDL_Window* window, Application * game)
 		{
 			unsigned int count = 0;
 			std::stringstream ss;
-<<<<<<< Updated upstream
-=======
 
-			//Creating and adding a light to the scene
+			//Add light to the scene
 			if (ImGui::Button("Add Light", ImVec2(200.0, 20.0)))
 			{
 				Light* light = new Light();
 				game->light_list.push_back(light);
 			}
 
-			//Creating and adding a mesh to the scene
+			//Add mesh to the scene
 			if (ImGui::Button("Add Mesh", ImVec2(200.0, 20.0)))
 			{
 				SceneNode* node = new SceneNode();
@@ -148,7 +147,6 @@ void renderGUI(SDL_Window* window, Application * game)
 			}
 			//ImGui::TreePop();
 
->>>>>>> Stashed changes
 			for (auto& node : game->node_list)
 			{
 				ss << count;

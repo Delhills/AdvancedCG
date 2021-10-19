@@ -4,22 +4,47 @@
 #include "utils.h"
 
 unsigned int SceneNode::lastNameId = 0;
-unsigned int mesh_selected = 0;
+unsigned int Light::lastLightId = 0;
+unsigned int environment_selected = 0;
 
 SceneNode::SceneNode()
 {
+	//Setting name
 	this->name = std::string("Node" + std::to_string(lastNameId++));
+
+	//Setting default mesh and material
+	mesh = Mesh::Get("data/models/helmet/helmet.obj");
+	material = new PBRMaterial();
+
+	material->texture = Texture::Get("data/models/helmet/albedo.png");
+
+	((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/helmet/normal.png");
+	((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/helmet/ao.png");
+	((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/helmet/roughness.png");
+	((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/helmet/metalness.png");
+	((PBRMaterial*)material)->emissive_texture = Texture::Get("data/models/helmet/emissive.png");
+	((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
 }
 
 
 SceneNode::SceneNode(const char * name)
 {
+	//Setting name
 	this->name = name;
+
+	//Setting default mesh and material
+	mesh = Mesh::Get("data/meshes/sphere.obj");
+	material = new PhongMaterial();
+	material->texture = Texture::Get("data/models/ball/albedo.png");
+	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
 }
 
 SceneNode::~SceneNode()
 {
-
+	//Destroying stored data
+	material->shader->~Shader();
+	material->texture->~Texture();
+	mesh->~Mesh();
 }
 
 void SceneNode::render(Camera* camera)
@@ -37,7 +62,7 @@ void SceneNode::renderWireframe(Camera* camera)
 void SceneNode::renderInMenu()
 {
 	//Model edit
-	if (ImGui::TreeNode("Model")) 
+	if (ImGui::TreeNode("Model"))
 	{
 		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
 		ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
@@ -45,29 +70,28 @@ void SceneNode::renderInMenu()
 		ImGui::DragFloat3("Rotation", matrixRotation, 0.1f);
 		ImGui::DragFloat3("Scale", matrixScale, 0.1f);
 		ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
-		
+
 		ImGui::TreePop();
 	}
 
 	//Material
 	if (material && ImGui::TreeNode("Material"))
 	{
-<<<<<<< Updated upstream
-=======
+		ImGui::ColorEdit4("Color", (float*)&material->color);
 		bool changed = false;
-		changed |= ImGui::Combo("Material Type", (int*)&material_selected, "PHONG\0REFLECTIVE\0TEXTURED\0WIREFRAME\0");
+		changed |= ImGui::Combo("Material Type", (int*)&material_selected, "PBR\0PHONG\0REFLECTIVE\0TEXTURED\0WIREFRAME\0");
 		if (changed)
 		{
 			switch (material_selected)
 			{
-			case 0: material = new PhongMaterial(); break;
-			case 1: material = new ReflectiveMaterial(); break;
-			case 2: material = new TexturedMaterial(); break;
-			case 3: material = new WireframeMaterial(); break;
+			case 0: material = new PBRMaterial(); break;
+			case 1: material = new PhongMaterial(); break;
+			case 2: material = new ReflectiveMaterial(); break;
+			case 3: material = new TexturedMaterial(); break;
+			case 4: material = new WireframeMaterial(); break;
 			}
 
-			//Setting the texture once the material has been changed and uses texture
-			if (material_selected == 0 || material_selected == 2)
+			if (material_selected == 0 || material_selected == 1 || material_selected == 3)
 			{
 				switch (texture_selected)
 				{
@@ -80,13 +104,10 @@ void SceneNode::renderInMenu()
 			}
 		}
 
->>>>>>> Stashed changes
 		material->renderInMenu();
 		ImGui::TreePop();
 	}
 
-<<<<<<< Updated upstream
-=======
 	//Texture
 	if (material->texture && ImGui::TreeNode("Texture"))
 	{
@@ -107,18 +128,89 @@ void SceneNode::renderInMenu()
 		ImGui::TreePop();
 	}
 
->>>>>>> Stashed changes
 	//Geometry
 	if (mesh && ImGui::TreeNode("Geometry"))
 	{
 		bool changed = false;
-		changed |= ImGui::Combo("Mesh", (int*)&mesh_selected, "SPHERE\0HELMET\0");
+		changed |= ImGui::Combo("Mesh", (int*)&mesh_selected, "SPHERE\0BOX\0HELMET\0BENCH\0LANTERN\0");
+		if (changed)
+		{
+			switch (mesh_selected)
+			{
+			case 0:
+				mesh = Mesh::Get("data/meshes/sphere.obj");
+				material->texture = Texture::Get("data/models/ball/albedo.png");
+				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/ball/metalness.png");
+				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/ball/roughness.png");
+				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/ball/normal.png");
+				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+				((PBRMaterial*)material)->use_metaltxt = true;
+				((PBRMaterial*)material)->use_aotxt = false;
+				((PBRMaterial*)material)->use_emissivetxt = false;
+				((PBRMaterial*)material)->emission_factor = 0.0f;
+				texture_selected = 0;
+				break;
+			case 1:
+				mesh = Mesh::Get("data/meshes/box.ASE");
+				material->texture = Texture::Get("data/models/basic/albedo.png");
+				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/basic/metalness.png");
+				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/basic/roughness.png");
+				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/basic/normal.png");
+				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+				((PBRMaterial*)material)->use_metaltxt = true;
+				((PBRMaterial*)material)->use_aotxt = false;
+				((PBRMaterial*)material)->use_emissivetxt = false;
+				((PBRMaterial*)material)->emission_factor = 0.0f;
+				texture_selected = 1;
+				break;
+			case 2:
+				mesh = Mesh::Get("data/models/helmet/helmet.obj");
+				material->texture = Texture::Get("data/models/helmet/albedo.png");
+				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/helmet/roughness.png");
+				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/helmet/normal.png");
+				((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/helmet/ao.png");
+				((PBRMaterial*)material)->emissive_texture = Texture::Get("data/models/helmet/emissive.png");
+				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+				((PBRMaterial*)material)->use_metaltxt = false;
+				((PBRMaterial*)material)->use_aotxt = true;
+				((PBRMaterial*)material)->use_emissivetxt = true;
 
+				texture_selected = 3;
+				break;
+			case 3:
+				mesh = Mesh::Get("data/models/bench/bench.obj");
+				material->texture = Texture::Get("data/models/lantern/albedo.png");
+				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/lantern/metalness.png");
+				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/lantern/roughness.png");
+				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/lantern/normal.png");
+				((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/lantern/ao.png");
+				((PBRMaterial*)material)->emissive_texture = Texture::Get("data/models/lantern/emissive.png");
+				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+				((PBRMaterial*)material)->use_metaltxt = true;
+				((PBRMaterial*)material)->use_aotxt = true;
+				((PBRMaterial*)material)->use_emissivetxt = true;
+				texture_selected = 2;
+				break;
+			case 4:
+				mesh = Mesh::Get("data/models/lantern/lantern.obj");
+				material->texture = Texture::Get("data/models/lantern/albedo.png");
+				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/lantern/metalness.png");
+				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/lantern/roughness.png");
+				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/lantern/normal.png");
+				((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/lantern/ao.png");
+				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+				((PBRMaterial*)material)->use_metaltxt = true;
+				((PBRMaterial*)material)->use_aotxt = true;
+				((PBRMaterial*)material)->use_emissivetxt = false;
+				((PBRMaterial*)material)->emission_factor = 0.0f;
+				texture_selected = 4;
+				break;
+			}
+
+		}
 		ImGui::TreePop();
 	}
 }
-<<<<<<< Updated upstream
-=======
 
 Light::Light()
 {
@@ -129,6 +221,7 @@ Light::Light()
 	model.setTranslation(10.0f, 10.0f, 10.0f);
 	diffuse = vec3(1.0f, 1.0f, 1.0f);
 	specular = vec3(1.0f, 1.0f, 1.0f);
+	intensity = 1.0;
 
 	//Not adding a node name id
 	lastNameId--;
@@ -139,6 +232,7 @@ void Light::renderInMenu()
 	//Light properties
 	ImGui::ColorEdit3("Diffuse Color", (float*)&diffuse); // Edit 3 floats representing a color
 	ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
+	ImGui::DragFloat("Intenity", (float*)&intensity, 0.1f, 0.0f, 100.f);
 
 	//Position
 	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
@@ -160,7 +254,14 @@ Skybox::Skybox()
 	
 	//Set panorama as the default skybox
 	material->texture = new Texture();
-	material->texture->cubemapFromImages("data/environments/dragonvale");
+	HDRE* hdre = HDRE::Get("data/environments/PANORAMA.hdre");
+
+	material->texture->cubemapFromHDRE(hdre, 0);
+	((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
+	((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
+	((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
+	((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
+	((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
 
 	//Not adding a node name id
 	lastNameId--;
@@ -172,21 +273,30 @@ void Skybox::render(Camera* camera)
 	model.setTranslation(camera->eye.x, camera->eye.y, camera->eye.z);
 
 	//Render skybox
-	SceneNode::render(camera);
+	material->render(mesh, model, camera);
 }
 
 void Skybox::renderInMenu()
 {
 	bool changed = false;
-	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "DRAGONVALE\0CITY\0SNOW\0");
+	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
 	if (changed)
 	{
+		HDRE* hdre;
 		switch (environment_selected)
 		{
-		case 0: material->texture->cubemapFromImages("data/environments/dragonvale"); break;
-		case 1: material->texture->cubemapFromImages("data/environments/city"); break;
-		case 2: material->texture->cubemapFromImages("data/environments/snow"); break;
+		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
+		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
+		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
+		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
+		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
 		}
+
+		material->texture->cubemapFromHDRE(hdre, 0);
+		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 0);
+		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 1);
+		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 2);
+		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 3);
+		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 4);
 	}
 }
->>>>>>> Stashed changes

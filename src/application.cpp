@@ -44,14 +44,16 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
+	//Setting the default scene
 	{
-		StandardMaterial* mat = new StandardMaterial();
-		SceneNode* node = new SceneNode("Visible node");
-		node->mesh = Mesh::Get("data/models/helmet/helmet.obj");
-		//node->model.scale(5, 5, 5);
-		node->material = mat;
-		mat->texture = Texture::Get("data/models/helmet/albedo.png");
-		mat->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/texture.fs");
+		ambient_light = Vector3(0.5, 0.5, 0.5);
+
+		sky = new Skybox();
+
+		Light* light = new Light();
+		light_list.push_back(light);
+
+		SceneNode* node = new SceneNode();
 		node_list.push_back(node);
 	}
 	
@@ -71,13 +73,10 @@ void Application::render(void)
 	//set the camera as default
 	camera->enable();
 
-<<<<<<< Updated upstream
-=======
 	//render skybox
-	glDisable(GL_DEPTH_TEST); //Disable depth test
+	glDisable(GL_DEPTH_TEST);
 	sky->render(camera);
 
->>>>>>> Stashed changes
 	//set flags
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -120,8 +119,8 @@ void Application::update(double seconds_elapsed)
 	if (Input::isKeyPressed(SDL_SCANCODE_D) || Input::isKeyPressed(SDL_SCANCODE_RIGHT)) camera->move(Vector3(-1.0f, 0.0f, 0.0f) * speed);
 	if (Input::isKeyPressed(SDL_SCANCODE_Q)) camera->move(Vector3(0.0f, 1.0f, 0.0f) * speed);
 	if (Input::isKeyPressed(SDL_SCANCODE_E)) camera->move(Vector3(0.0f, -1.0f, 0.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_SPACE)) camera->moveGlobal(Vector3(0.0f, -1.0f, 0.0f) * speed);
-	if (Input::isKeyPressed(SDL_SCANCODE_LCTRL)) camera->moveGlobal(Vector3(0.0f,  1.0f, 0.0f) * speed);
+	if (Input::isKeyPressed(SDL_SCANCODE_RETURN)) camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
+
 
 	//to navigate with the mouse fixed in the middle
 	if (mouse_locked)

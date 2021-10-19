@@ -6,6 +6,7 @@ varying vec4 v_color;
 
 //the texture passed from the application
 uniform sampler2D u_texture;
+uniform sampler2D u_texture_normals;
 uniform mat4 u_model;
 
 //here create uniforms for all the data we need here
@@ -42,7 +43,7 @@ void main()
 
 	vec3 V = normalize(u_camera_position - v_world_position);
 	vec3 R = reflect(-L, normal);
-	float RV = pow(clamp(dot(V, R), 0.0, 1.0), u_material_shininess);
+	float RV = pow(max(dot(V, R), 0.0), u_material_shininess);
 	vec3 spec = RV * Ks * u_light_specular;
 
 	vec3 illumination = (KaIa + diff + spec);
