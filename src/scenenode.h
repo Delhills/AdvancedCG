@@ -15,9 +15,9 @@ public:
 
 	static unsigned int lastNameId;
 
-	unsigned int mesh_selected = 0;
+	unsigned int mesh_selected = 2;
 	unsigned int material_selected = 0;
-	unsigned int texture_selected = 0;
+	unsigned int texture_selected = 3;
 
 	SceneNode();
 	SceneNode(const char* name);

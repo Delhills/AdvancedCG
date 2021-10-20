@@ -71,27 +71,58 @@ void SceneNode::renderInMenu()
 	if (material && ImGui::TreeNode("Material"))
 	{
 		bool changed = false;
-		changed |= ImGui::Combo("Material Type", (int*)&material_selected, "PHONG\0REFLECTIVE\0TEXTURED\0WIREFRAME\0");
+		changed |= ImGui::Combo("Material Type", (int*)&material_selected, "PBR\0PHONG\0REFLECTIVE\0TEXTURED\0WIREFRAME\0");
 		if (changed)
 		{
 			switch (material_selected)
 			{
-			case 0: material = new PhongMaterial(); break;
-			case 1: material = new ReflectiveMaterial(); break;
-			case 2: material = new TexturedMaterial(); break;
-			case 3: material = new WireframeMaterial(); break;
+			case 0: material = new PBRMaterial(); break;
+			case 1: material = new PhongMaterial(); break;
+			case 2: material = new ReflectiveMaterial(); break;
+			case 3: material = new TexturedMaterial(); break;
+			case 4: material = new WireframeMaterial(); break;
 			}
 
 			if (material_selected == 0 || material_selected == 2)
 			{
-				switch (texture_selected)
+				std::string geometry;
+				switch (mesh_selected)
 				{
-				case 0: material->texture = Texture::Get("data/models/ball/albedo.png"); break;
-				case 1: material->texture = Texture::Get("data/models/basic/albedo.png"); break;
-				case 2: material->texture = Texture::Get("data/models/bench/albedo.png"); break;
-				case 3: material->texture = Texture::Get("data/models/helmet/albedo.png"); break;
-				case 4: material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
+				case 0: geometry = "ball"; break;
+				case 1: geometry = "basic"; break;
+				case 2: geometry = "helmet"; break;
+				case 3: geometry = "bench"; break;
+				case 4: geometry = "lantern"; break;
 				}
+
+				material->texture = Texture::Get(("data/models/" + geometry + "/albedo.png").c_str());
+				((PBRMaterial*)material)->normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
+				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+
+				if (mesh_selected == 2)
+				{
+					((PBRMaterial*)material)->metallic_roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+					((PBRMaterial*)material)->metallic_texture = NULL;
+					((PBRMaterial*)material)->roughness_texture = NULL;
+				}
+				else
+				{
+					((PBRMaterial*)material)->metallic_roughness_texture = NULL;
+					((PBRMaterial*)material)->metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
+					((PBRMaterial*)material)->roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+				}
+
+				((PBRMaterial*)material)->ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
+				if (((PBRMaterial*)material)->ao_texture == NULL)
+					((PBRMaterial*)material)->ao_texture = Texture::getWhiteTexture();
+
+				((PBRMaterial*)material)->emissive_texture = Texture::Get(("data/models/" + geometry + "/emissive.png").c_str());
+				if (((PBRMaterial*)material)->emissive_texture == NULL)
+					((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
+
+				((PBRMaterial*)material)->opacity_texture = Texture::Get(("data/models/" + geometry + "/opacity.png").c_str());
+				if (((PBRMaterial*)material)->opacity_texture == NULL)
+					((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
 			}
 		}
 
@@ -126,7 +157,166 @@ void SceneNode::renderInMenu()
 		changed |= ImGui::Combo("Mesh", (int*)&mesh_selected, "SPHERE\0BOX\0HELMET\0BENCH\0LANTERN\0");
 		if (changed)
 		{
+			std::string geometry;
 			switch (mesh_selected)
+			{
+			case 0: 
+				mesh = Mesh::Get("data/meshes/sphere.obj"); 
+				material->texture = Texture::Get("data/models/ball/albedo.png");
+				geometry = "ball";
+				texture_selected = 0; 
+				break;
+			case 1: 
+				mesh = Mesh::Get("data/meshes/box.ASE");
+				material->texture = Texture::Get("data/models/basic/albedo.png"); 
+				geometry = "basic";
+				texture_selected = 1; 
+				break;
+			case 2: 
+				mesh = Mesh::Get("data/models/helmet/helmet.obj"); 
+				material->texture = Texture::Get("data/models/helmet/albedo.png");
+				geometry = "helmet";
+				texture_selected = 3; 
+				break;
+			case 3: 
+				mesh = Mesh::Get("data/models/bench/bench.obj"); 
+				material->texture = Texture::Get("data/models/bench/albedo.png");
+				geometry = "bench";
+				texture_selected = 2; 
+				break;
+			case 4:
+				mesh = Mesh::Get("data/models/lantern/lantern.obj");
+				material->texture = Texture::Get("data/models/lantern/albedo.png");
+				geometry = "lantern";
+				texture_selected = 4; 
+				break;
+			}
+
+			((PBRMaterial*)material)->normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
+			((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
+
+			if (mesh_selected == 2)
+			{
+				((PBRMaterial*)material)->metallic_roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+				((PBRMaterial*)material)->metallic_texture = NULL;
+				((PBRMaterial*)material)->roughness_texture = NULL;
+			}
+			else 
+			{
+				((PBRMaterial*)material)->metallic_roughness_texture = NULL;
+				((PBRMaterial*)material)->metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
+				((PBRMaterial*)material)->roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+			}
+
+			((PBRMaterial*)material)->ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
+			if (((PBRMaterial*)material)->ao_texture == NULL)
+				((PBRMaterial*)material)->ao_texture = Texture::getWhiteTexture();
+
+			((PBRMaterial*)material)->emissive_texture = Texture::Get(("data/models/" + geometry + "/emissive.png").c_str());
+			if (((PBRMaterial*)material)->emissive_texture == NULL)
+				((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
+
+			((PBRMaterial*)material)->opacity_texture = Texture::Get(("data/models/" + geometry + "/opacity.png").c_str());
+			if (((PBRMaterial*)material)->opacity_texture == NULL)
+				((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
+		}
+		ImGui::TreePop();
+	}
+}
+
+Light::Light()
+{
+	//Setting name
+	this->name = std::string("Light" + std::to_string(lastLightId++));
+
+	//Setting default parameters
+	model.setTranslation(10.0f, 10.0f, 10.0f);
+	diffuse = vec3(1.0f, 1.0f, 1.0f);
+	specular = vec3(1.0f, 1.0f, 1.0f);
+	intensity = 1.0;
+	color = vec3(1.0f, 1.0f, 1.0f);
+
+
+	//Not adding a node name id
+	lastNameId--;
+}
+
+void Light::renderInMenu()
+{
+	//Light properties
+	ImGui::ColorEdit3("Diffuse Color", (float*)&diffuse); // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
+	ImGui::DragFloat("Intenity", (float*)&intensity, 0.1f, 0.0f, 100.f);
+	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
+
+	//Position
+	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+	ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
+	ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
+	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
+}
+
+Skybox::Skybox()
+{
+	//Set name
+	name = "Skybox";
+
+	//Set cube as the mesh for the cubemap
+	mesh = Mesh::Get("data/meshes/box.ASE");
+
+	//A skybox material 
+	material = new SkyboxMaterial();
+	
+	//Set panorama as the default skybox
+	material->texture = new Texture();
+	HDRE* hdre = HDRE::Get("data/environments/PANORAMA.hdre");
+
+	material->texture->cubemapFromHDRE(hdre, 0);
+	((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
+	((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
+	((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
+	((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
+	((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
+
+	//Not adding a node name id
+	lastNameId--;
+}
+
+void Skybox::render(Camera* camera)
+{
+	//Setting the center at the camera center
+	model.setTranslation(camera->eye.x, camera->eye.y, camera->eye.z);
+
+	//Render skybox
+	material->render(mesh, model, camera);
+}
+
+void Skybox::renderInMenu()
+{
+	bool changed = false;
+	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
+	if (changed)
+	{
+		HDRE* hdre;
+		switch (environment_selected)
+		{
+		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
+		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
+		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
+		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
+		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
+		}
+
+		material->texture->cubemapFromHDRE(hdre, 0);
+		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
+		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
+		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
+		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
+		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
+	}
+}
+
+/*switch (mesh_selected)
 			{
 			case 0: 
 				mesh = Mesh::Get("data/meshes/sphere.obj"); 
@@ -192,102 +382,4 @@ void SceneNode::renderInMenu()
 				((PBRMaterial*)material)->opacity_texture = Texture::Get("data/models/lantern/opacity.png");
 				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
 				texture_selected = 4; 
-				break;
-			}
-
-		}
-		ImGui::TreePop();
-	}
-}
-
-Light::Light()
-{
-	//Setting name
-	this->name = std::string("Light" + std::to_string(lastLightId++));
-
-	//Setting default parameters
-	model.setTranslation(10.0f, 10.0f, 10.0f);
-	diffuse = vec3(1.0f, 1.0f, 1.0f);
-	specular = vec3(1.0f, 1.0f, 1.0f);
-	intensity = 1.0;
-	color = vec3(1.0f, 1.0f, 1.0f);
-
-
-	//Not adding a node name id
-	lastNameId--;
-}
-
-void Light::renderInMenu()
-{
-	//Light properties
-	ImGui::ColorEdit3("Diffuse Color", (float*)&diffuse); // Edit 3 floats representing a color
-	ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
-	ImGui::DragFloat("Intenity", (float*)&intensity, 0.1f, 0.0f, 100.f);
-	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
-
-	//Position
-	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-	ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
-	ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
-	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
-}
-
-Skybox::Skybox()
-{
-	//Set name
-	name = "Skybox";
-
-	//Set cube as the mesh for the cubemap
-	mesh = Mesh::Get("data/meshes/box.ASE");
-
-	//A skybox material 
-	material = new SkyboxMaterial();
-	
-	//Set panorama as the default skybox
-	material->texture = new Texture();
-	HDRE* hdre = HDRE::Get("data/environments/PANORAMA.hdre");
-
-	material->texture->cubemapFromHDRE(hdre, 0);
-	((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 0);
-	((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 1);
-	((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 2);
-	((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 3);
-	((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 4);
-
-	//Not adding a node name id
-	lastNameId--;
-}
-
-void Skybox::render(Camera* camera)
-{
-	//Setting the center at the camera center
-	model.setTranslation(camera->eye.x, camera->eye.y, camera->eye.z);
-
-	//Render skybox
-	material->render(mesh, model, camera);
-}
-
-void Skybox::renderInMenu()
-{
-	bool changed = false;
-	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
-	if (changed)
-	{
-		HDRE* hdre;
-		switch (environment_selected)
-		{
-		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
-		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
-		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
-		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
-		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
-		}
-
-		material->texture->cubemapFromHDRE(hdre, 0);
-		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 0);
-		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 1);
-		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 2);
-		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 3);
-		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 4);
-	}
-}
+				break;*/
