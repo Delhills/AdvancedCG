@@ -39,6 +39,8 @@ uniform samplerCube u_texture_prem_2;
 uniform samplerCube u_texture_prem_3;
 uniform samplerCube u_texture_prem_4;
 
+uniform float u_output;
+
 const float GAMMA = 2.2;
 const float INV_GAMMA = 1.0 / GAMMA;
 
@@ -185,7 +187,7 @@ void getMaterialProperties(inout PBRMat material)
 	material.N = texture2D(u_normal_texture, v_uv).xyz;
 	material.N = mix(normal, perturbNormal(normal, v_world_position, v_uv, material.N), u_normal_factor);
 
-	if (u_metallic_roughness == 1.0)
+	if (u_metallic_roughness)
 	{
 		vec2 metallic_roughness = texture2D(u_metallic_roughness_texture, v_uv).yz;
 		material.roughness = metallic_roughness.x * u_roughness_factor;
@@ -200,7 +202,6 @@ void getMaterialProperties(inout PBRMat material)
 
 	vec3 F0 = vec3(0.04); //common material
 	material.F_0 = mix( F0, material.albedo.xyz, material.metallic );
-
 	material.diffuse_color = (1.0 - material.metallic) * material.albedo.xyz; 
 }
 
@@ -234,15 +235,17 @@ vec3 getPixelColor(vec3 N, vec3 V, vec3 L, vec3 H, PBRMat material)
 	//compute the IBL
 	vec3 SpecularIBL = vec3(0.0);
 	vec3 DiffuseIBL = vec3(0.0);
+	vec3 SpecularBRDF;
+	vec4 brdf2D;
 	if (u_ibl)
 	{
 		vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
 		vec3 R = reflect(-V,N);
 		vec2 uv_lut = vec2(NdotV, material.roughness);
-		vec4 brdf2D = texture2D(u_lut, uv_lut);
+		brdf2D = texture2D(u_lut, uv_lut);
 
 		vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
-		vec3 SpecularBRDF = F_IBL * brdf2D.x + brdf2D.y;
+		SpecularBRDF = F_IBL * brdf2D.x + brdf2D.y;
 		SpecularIBL = specularSample * SpecularBRDF;
 
 		vec3 kD_IBL = vec3(1.0) - F_IBL;
@@ -283,10 +286,20 @@ void main()
 
 	// 5. Any extra texture to apply after tonemapping
 	// ...
+	if (u_output == 1)
+		color = vec4(material.albedo.xyz, 1.0);
 
 	// Last step: to gamma space
 	// ...
 	color = linear_to_gamma(color);
+;
+	if (u_output == 2)
+		color = vec4(vec3(material.roughness), 1.0);
+	if (u_output == 3)
+		color = vec4(vec3(material.metallic), 1.0);
+	if (u_output == 4)
+		color = vec4(material.N, 1.0);
 
-	gl_FragColor = vec4(color, material.opacity);
+	if (gl_FrontFacing) 
+		gl_FragColor = vec4(color, material.opacity);
 }

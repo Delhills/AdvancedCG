@@ -307,6 +307,7 @@ void Skybox::renderInMenu()
 		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
 		}
 
+
 		material->texture->cubemapFromHDRE(hdre, 0);
 		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
 		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);

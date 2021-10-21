@@ -231,6 +231,8 @@ PBRMaterial::PBRMaterial()
 	normal = 1.0;
 	roughness = 1.0;
 	metalness = 1.0;
+
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
 }
 
 PBRMaterial::~PBRMaterial()
@@ -242,7 +244,7 @@ PBRMaterial::~PBRMaterial()
 	roughness_texture = NULL;
 	emissive_texture = NULL;
 	opacity_texture = NULL;
-	BRDFlut = NULL;
+	BRDFlut = Texture::Get("data/brdfLUT.png");
 }
 
 void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
@@ -264,7 +266,7 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 	}
 	shader->setUniform("u_opacity_texture", opacity_texture, 14);
 	shader->setUniform("u_ao_texture", ao_texture, 4);
-	shader->setUniform("u_lut", BRDFlut, 5);
+	shader->setUniform("u_lut", Texture::Get("data/brdfLUT.png"), 5);
 
 	SkyboxMaterial* sky = (SkyboxMaterial*)Application::instance->sky->material;
 	shader->setUniform("u_environment_texture", sky->texture, 6);
@@ -295,9 +297,9 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		setUniforms(camera, model);
 
 		//MULTI PASS RENDER
+		bool first_pass = true;
 		std::vector< Light* > lights = Application::instance->light_list;
-
-		shader->setUniform("u_ibl", true);
+		shader->setUniform("u_ibl", first_pass);
 
 		//Use all the lights
 		for (int i = 0; i < lights.size(); ++i)
@@ -307,9 +309,8 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 			if (i == 1) //Blending on after first pass and no ambient light
 			{
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				shader->setVector3("u_light_ambient", Vector3(0, 0, 0));
-				int ibl = 0;
-				shader->setUniform("u_ibl", ibl);
+				first_pass = false;
+				shader->setUniform("u_ibl", first_pass);
 			}
 
 			//Pass light parameters
