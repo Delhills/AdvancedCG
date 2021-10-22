@@ -285,10 +285,8 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 {
 	if (mesh && shader)
 	{
-		//Establecemos un multi pass render
+		//Establecemos un single pass render
 		glDepthFunc(GL_LEQUAL);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		//enable shader
 		shader->enable();
@@ -296,36 +294,29 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		//upload uniforms
 		setUniforms(camera, model);
 
-		//MULTI PASS RENDER
-		bool first_pass = true;
+		//SINGLE PASS RENDER
 		std::vector< Light* > lights = Application::instance->light_list;
-		shader->setUniform("u_ibl", first_pass);
 
-		//Use all the lights
+		//Defining the vectors that will be passed to the GPU
+		Vector3 light_position[100];
+		Vector3 light_color[100];
+		float light_intensity[100];
+
+		//Filling the vectors
 		for (int i = 0; i < lights.size(); ++i)
 		{
 			Light* light = lights[i];
-
-			if (i == 1) //Blending on after first pass and no ambient light
-			{
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				first_pass = false;
-				shader->setUniform("u_ibl", first_pass);
-			}
-
-			//Pass light parameters
-			shader->setUniform("u_light_position", light->model.getTranslation());
-			shader->setUniform("u_light_intensity", light->intensity);
-			shader->setUniform("u_light_color", light->color);
-
-			mesh->render(GL_TRIANGLES); //Render the mesh for every light
+			light_position[i] = light->model.getTranslation();
+			light_color[i] = light->color;
+			light_intensity[i] = light->intensity;
 		}
 
-		//disable shader
-		shader->disable();
+		shader->setUniform3Array("u_light_position", (float*)&light_position, 100);
+		shader->setUniform3Array("u_light_color", (float*)&light_color, 100);
+		shader->setUniform1Array("u_light_intensity", (float*)&light_intensity, 100);
+		shader->setUniform1("u_num_lights", (float)lights.size());
 
-		glDisable(GL_BLEND);
-		glDepthFunc(GL_LESS); //as default
+		mesh->render(GL_TRIANGLES); //Render the mesh for every light
 	}
 }
 
@@ -335,3 +326,47 @@ void PBRMaterial::renderInMenu()
 	ImGui::DragFloat("Roughness", (float*)&roughness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Normal Scale", (float*)&normal, 0.01f, -1.0f, 2.0f);
 }
+
+/*
+//Establecemos un multi pass render
+glDepthFunc(GL_LEQUAL);
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+//enable shader
+shader->enable();
+
+//upload uniforms
+setUniforms(camera, model);
+
+//MULTI PASS RENDER
+float first_pass = 1.0;
+std::vector< Light* > lights = Application::instance->light_list;
+shader->setUniform("u_first_pass", first_pass);
+
+//Use all the lights
+for (int i = 0; i < lights.size(); ++i)
+{
+	Light* light = lights[i];
+
+	if (i != 0) //Blending on after first pass and no ambient light
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		first_pass = 0.0;
+		shader->setUniform("u_first_pass", first_pass);
+	}
+
+	//Pass light parameters
+	shader->setUniform("u_light_position", light->model.getTranslation());
+	shader->setUniform("u_light_intensity", light->intensity);
+	shader->setUniform("u_light_color", light->color);
+
+	mesh->render(GL_TRIANGLES); //Render the mesh for every light
+}
+
+//disable shader
+shader->disable();
+
+glDisable(GL_BLEND);
+glDepthFunc(GL_LESS); //as default
+*/

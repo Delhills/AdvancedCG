@@ -21,13 +21,13 @@ uniform samplerCube u_environment_texture;
 uniform mat4 u_model;
 
 //here create uniforms for all the data we need here
-uniform vec3 u_light_position;
-uniform float u_light_intensity;
-uniform vec3 u_light_color;
+uniform vec3 u_light_position[100];
+uniform float u_light_intensity[100];
+uniform vec3 u_light_color[100];
 
 uniform vec3 u_camera_position;
 uniform vec4 u_color;
-uniform bool u_ibl;
+uniform float u_first_pass;
 uniform float u_metallic_roughness;
 uniform float u_metallic_factor;
 uniform float u_roughness_factor;
@@ -40,6 +40,8 @@ uniform samplerCube u_texture_prem_3;
 uniform samplerCube u_texture_prem_4;
 
 uniform float u_output;
+
+uniform float u_num_lights;
 
 const float GAMMA = 2.2;
 const float INV_GAMMA = 1.0 / GAMMA;
@@ -205,60 +207,59 @@ void getMaterialProperties(inout PBRMat material)
 	material.diffuse_color = (1.0 - material.metallic) * material.albedo.xyz; 
 }
 
-void computeVectors(inout vec3 N, inout vec3 L, inout vec3 H, inout vec3 V, PBRMat material)
+vec3 getPixelColor(PBRMat material)
 {
+	vec3 N, V, L, H;
 	N = material.N;
 	V = normalize(u_camera_position - v_world_position);
-	L = normalize(u_light_position - v_world_position);
-	H = normalize(L+V);
-}
 
-vec3 getPixelColor(vec3 N, vec3 V, vec3 L, vec3 H, PBRMat material)
-{
 	//Compute dot products
-	float NdotL = max(dot(N,L),0.0);
-	float NdotH = max(dot(N,H),0.0);
 	float NdotV = max(dot(N,V),0.0);
-	float LdotH = max(dot(L,H),0.0);
-
-	//Compute BRDF elements
-	vec3 F = compute_F(material.F_0, LdotH); 
-	float D = compute_D(material.roughness, NdotH);
-	float G = compute_G(material.roughness, NdotL, NdotV); 
-
-	//Diffuse component
-	vec3 f_diff = material.diffuse_color * RECIPROCAL_PI * NdotL;
-
-	//Specular component
-	vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
-
-	//compute the IBL
-	vec3 SpecularIBL = vec3(0.0);
-	vec3 DiffuseIBL = vec3(0.0);
-	vec3 SpecularBRDF;
-	vec4 brdf2D;
-	if (u_ibl)
-	{
-		vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
-		vec3 R = reflect(-V,N);
-		vec2 uv_lut = vec2(NdotV, material.roughness);
-		brdf2D = texture2D(u_lut, uv_lut);
-
-		vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
-		SpecularBRDF = F_IBL * brdf2D.x + brdf2D.y;
-		SpecularIBL = specularSample * SpecularBRDF;
-
-		vec3 kD_IBL = vec3(1.0) - F_IBL;
-		vec3 diffuseSample = getReflectionColor(N, 1.0).xyz;
-		DiffuseIBL = (diffuseSample * material.diffuse_color) * kD_IBL;
-	}
 	
-	vec3 direct_light = (f_diff + f_specular) * u_light_intensity * u_light_color; 
-	vec3 indirect_light = (SpecularIBL + DiffuseIBL) * material.ao;
-	vec3 color = direct_light + indirect_light;
+	//compute the IBL
+	vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
+	vec3 R = reflect(-V,N);
+	vec2 uv_lut = vec2(clamp(NdotV, 0.0, 1.0), clamp(material.roughness, 0.01, 0.99));
+	vec2 brdf2D = texture2D(u_lut, uv_lut);
 
-	if (u_ibl)
-		color += material.emission.xyz;
+	vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
+	vec3 SpecularBRDF = F_IBL * brdf2D.x + brdf2D.y;
+	vec3 SpecularIBL = specularSample * SpecularBRDF;
+
+	vec3 kD_IBL = vec3(1.0) - F_IBL;
+	vec3 diffuseSample = getReflectionColor(N, 1.0).xyz;
+	vec3 DiffuseIBL = (diffuseSample * material.diffuse_color) * kD_IBL;
+	vec3 indirect_light = (SpecularIBL + DiffuseIBL) * material.ao;
+	vec3 color = indirect_light;
+
+	for (float i = 0.0; i < 100; ++i)
+	{
+		if (i <= u_num_lights)
+		{
+			L = normalize(u_light_position[i] - v_world_position);
+			H = normalize(L+V);
+
+			vec3 NdotL = max(dot(N,L),0.0);
+			vec3 NdotH = max(dot(N,H),0.0);
+			vec3 LdotH = max(dot(L,H),0.0);
+
+			//Compute BRDF elements
+			vec3 F = compute_F(material.F_0, LdotH); 
+			float D = compute_D(material.roughness, NdotH);
+			float G = compute_G(material.roughness, NdotL, NdotV); 
+
+			//Diffuse component
+			vec3 f_diff = material.diffuse_color * RECIPROCAL_PI * NdotL;
+
+			//Specular component
+			vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
+
+			vec3 direct_light = (f_diff + f_specular) * u_light_intensity[i] * u_light_color[i]; 
+			color += direct_light;
+		}
+	}
+
+	color += material.emission.xyz;
 
 	return color;
 }
@@ -273,12 +274,8 @@ void main()
 	getMaterialProperties(material);
 
 	// 3. Shade (Direct + Indirect)
-	//Compute vectors
-	vec3 N, V, L, H;
-	computeVectors(N, L, H, V, material);
-
 	//Get pixel color
-	vec3 color = getPixelColor(N, V, L, H, material);
+	vec3 color = getPixelColor(material);
 
 	// 4. Apply Tonemapping
 	// ...
