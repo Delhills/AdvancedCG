@@ -17,6 +17,9 @@ public:
 	virtual void setUniforms(Camera* camera, Matrix44 model) = 0;
 	virtual void render(Mesh* mesh, Matrix44 model, Camera * camera) = 0;
 	virtual void renderInMenu() = 0;
+
+	//Added method to change textures
+	virtual void setTexture(std::string geometry, int mesh) = 0;
 };
 
 class StandardMaterial : public Material {
@@ -28,6 +31,9 @@ public:
 	void setUniforms(Camera* camera, Matrix44 model);
 	void render(Mesh* mesh, Matrix44 model, Camera * camera);
 	void renderInMenu();
+
+	//Added method to change textures
+	void setTexture(std::string geometry, int mesh);
 };
 
 class PhongMaterial : public StandardMaterial {
@@ -109,6 +115,8 @@ public:
 	void setUniforms(Camera* camera, Matrix44 model);
 	void render(Mesh* mesh, Matrix44 model, Camera* camera);
 	void renderInMenu();
+
+	void setTexture(std::string geometry, int mesh);
 };
 
 #endif

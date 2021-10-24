@@ -95,34 +95,7 @@ void SceneNode::renderInMenu()
 				case 4: geometry = "lantern"; break;
 				}
 
-				material->texture = Texture::Get(("data/models/" + geometry + "/albedo.png").c_str());
-				((PBRMaterial*)material)->normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
-				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-
-				if (mesh_selected == 2)
-				{
-					((PBRMaterial*)material)->metallic_roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
-					((PBRMaterial*)material)->metallic_texture = NULL;
-					((PBRMaterial*)material)->roughness_texture = NULL;
-				}
-				else
-				{
-					((PBRMaterial*)material)->metallic_roughness_texture = NULL;
-					((PBRMaterial*)material)->metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
-					((PBRMaterial*)material)->roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
-				}
-
-				((PBRMaterial*)material)->ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
-				if (((PBRMaterial*)material)->ao_texture == NULL)
-					((PBRMaterial*)material)->ao_texture = Texture::getWhiteTexture();
-
-				((PBRMaterial*)material)->emissive_texture = Texture::Get(("data/models/" + geometry + "/emissive.png").c_str());
-				if (((PBRMaterial*)material)->emissive_texture == NULL)
-					((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
-
-				((PBRMaterial*)material)->opacity_texture = Texture::Get(("data/models/" + geometry + "/opacity.png").c_str());
-				if (((PBRMaterial*)material)->opacity_texture == NULL)
-					((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
+				material->setTexture(geometry, mesh_selected);
 			}
 		}
 
@@ -162,63 +135,32 @@ void SceneNode::renderInMenu()
 			{
 			case 0: 
 				mesh = Mesh::Get("data/meshes/sphere.obj"); 
-				material->texture = Texture::Get("data/models/ball/albedo.png");
 				geometry = "ball";
 				texture_selected = 0; 
 				break;
 			case 1: 
 				mesh = Mesh::Get("data/meshes/box.ASE");
-				material->texture = Texture::Get("data/models/basic/albedo.png"); 
 				geometry = "basic";
 				texture_selected = 1; 
 				break;
 			case 2: 
 				mesh = Mesh::Get("data/models/helmet/helmet.obj"); 
-				material->texture = Texture::Get("data/models/helmet/albedo.png");
 				geometry = "helmet";
 				texture_selected = 3; 
 				break;
 			case 3: 
 				mesh = Mesh::Get("data/models/bench/bench.obj"); 
-				material->texture = Texture::Get("data/models/bench/albedo.png");
 				geometry = "bench";
 				texture_selected = 2; 
 				break;
 			case 4:
 				mesh = Mesh::Get("data/models/lantern/lantern.obj");
-				material->texture = Texture::Get("data/models/lantern/albedo.png");
 				geometry = "lantern";
 				texture_selected = 4; 
 				break;
 			}
 
-			((PBRMaterial*)material)->normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
-			((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-
-			if (mesh_selected == 2)
-			{
-				((PBRMaterial*)material)->metallic_roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
-				((PBRMaterial*)material)->metallic_texture = NULL;
-				((PBRMaterial*)material)->roughness_texture = NULL;
-			}
-			else 
-			{
-				((PBRMaterial*)material)->metallic_roughness_texture = NULL;
-				((PBRMaterial*)material)->metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
-				((PBRMaterial*)material)->roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
-			}
-
-			((PBRMaterial*)material)->ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
-			if (((PBRMaterial*)material)->ao_texture == NULL)
-				((PBRMaterial*)material)->ao_texture = Texture::getWhiteTexture();
-
-			((PBRMaterial*)material)->emissive_texture = Texture::Get(("data/models/" + geometry + "/emissive.png").c_str());
-			if (((PBRMaterial*)material)->emissive_texture == NULL)
-				((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
-
-			((PBRMaterial*)material)->opacity_texture = Texture::Get(("data/models/" + geometry + "/opacity.png").c_str());
-			if (((PBRMaterial*)material)->opacity_texture == NULL)
-				((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
+			material->setTexture(geometry, mesh_selected);
 		}
 		ImGui::TreePop();
 	}

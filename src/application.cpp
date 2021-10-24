@@ -44,6 +44,19 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
+	std::string geometry[5] = {"ball", "basic", "helmet", "bench", "lantern"};
+	Texture::Get("data/brdfLUT.png");
+	for (int i = 0; i < 5; ++i)
+	{
+		Texture::Get(("data/models/" + geometry[i] + "/albedo.png").c_str());
+		Texture::Get(("data/models/" + geometry[i] + "/normal.png").c_str());
+		Texture::Get(("data/models/" + geometry[i] + "/ao.png").c_str());
+		Texture::Get(("data/models/" + geometry[i] + "/emissive.png").c_str());
+		Texture::Get(("data/models/" + geometry[i] + "/opacity.png").c_str());
+		Texture::Get(("data/models/" + geometry[i] + "/metalness.png").c_str());
+		Texture::Get(("data/models/" + geometry[i] + "/roughness.png").c_str());
+	}
+
 	//Setting the default scene
 	{
 		ambient_light = Vector3(0.5, 0.5, 0.5);

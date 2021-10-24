@@ -53,6 +53,11 @@ void StandardMaterial::renderInMenu()
 	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
 }
 
+void StandardMaterial::setTexture(std::string geometry, int mesh)
+{
+	texture = Texture::Get(("data/models/" + geometry + "/albedo.png").c_str());
+}
+
 PhongMaterial::PhongMaterial()
 {
 	//Setting the default parameters
@@ -253,6 +258,7 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 
 	shader->setUniform("u_normal_texture", normal_texture, 1);
 	shader->setUniform("u_emissive_texture", emissive_texture, 2);
+
 	if (metallic_roughness_texture)
 	{
 		shader->setUniform("u_metallic_roughness_texture", metallic_roughness_texture, 3);
@@ -261,20 +267,20 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 	else
 	{
 		shader->setUniform("u_metallic_roughness", 0.0);
-		shader->setUniform("u_roughness_texture", roughness_texture, 12);
-		shader->setUniform("u_metallic_texture", metallic_texture, 13);
+		shader->setUniform("u_roughness_texture", roughness_texture, 3);
+		shader->setUniform("u_metallic_texture", metallic_texture, 4);
 	}
-	shader->setUniform("u_opacity_texture", opacity_texture, 14);
-	shader->setUniform("u_ao_texture", ao_texture, 4);
-	shader->setUniform("u_lut", Texture::Get("data/brdfLUT.png"), 5);
+	shader->setUniform("u_opacity_texture", opacity_texture, 5);
+	shader->setUniform("u_ao_texture", ao_texture, 6);
+	shader->setUniform("u_lut", Texture::Get("data/brdfLUT.png"), 7);
 
 	SkyboxMaterial* sky = (SkyboxMaterial*)Application::instance->sky->material;
-	shader->setUniform("u_environment_texture", sky->texture, 6);
-	shader->setUniform("u_texture_prem_0", sky->texture_prem_0, 7);
-	shader->setUniform("u_texture_prem_1", sky->texture_prem_1, 8);
-	shader->setUniform("u_texture_prem_2", sky->texture_prem_2, 9);
-	shader->setUniform("u_texture_prem_3", sky->texture_prem_3, 10);
-	shader->setUniform("u_texture_prem_4", sky->texture_prem_4, 11);
+	shader->setUniform("u_environment_texture", sky->texture, 8);
+	shader->setUniform("u_texture_prem_0", sky->texture_prem_0, 9);
+	shader->setUniform("u_texture_prem_1", sky->texture_prem_1, 10);
+	shader->setUniform("u_texture_prem_2", sky->texture_prem_2, 11);
+	shader->setUniform("u_texture_prem_3", sky->texture_prem_3, 12);
+	shader->setUniform("u_texture_prem_4", sky->texture_prem_4, 13);
 
 	shader->setUniform("u_metallic_factor", metalness);
 	shader->setUniform("u_roughness_factor", roughness);
@@ -286,7 +292,9 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 	if (mesh && shader)
 	{
 		//Establecemos un single pass render
-		glDepthFunc(GL_LEQUAL);
+		glDepthFunc(GL_LEQUAL); 
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
 
 		//enable shader
 		shader->enable();
@@ -325,6 +333,39 @@ void PBRMaterial::renderInMenu()
 	ImGui::DragFloat("Metalness", (float*)&metalness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Roughness", (float*)&roughness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Normal Scale", (float*)&normal, 0.01f, -1.0f, 2.0f);
+}
+
+void PBRMaterial::setTexture(std::string geometry, int mesh)
+{
+	StandardMaterial::setTexture(geometry, mesh);
+
+	normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
+	BRDFlut = Texture::Get("data/brdfLUT.png");
+
+	ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
+	if (ao_texture == NULL)
+		ao_texture = Texture::getWhiteTexture();
+
+	emissive_texture = Texture::Get(("data/models/" + geometry + "/emissive.png").c_str());
+	if (emissive_texture == NULL)
+		emissive_texture = Texture::getBlackTexture();
+
+	opacity_texture = Texture::Get(("data/models/" + geometry + "/opacity.png").c_str());
+	if (opacity_texture == NULL)
+		opacity_texture = Texture::getWhiteTexture();
+
+	if (mesh == 2)
+	{
+		metallic_roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+		metallic_texture = NULL;
+		roughness_texture = NULL;
+	}
+	else
+	{
+		metallic_roughness_texture = NULL;
+		metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
+		roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+	}
 }
 
 /*

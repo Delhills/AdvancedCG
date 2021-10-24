@@ -145,7 +145,6 @@ void renderGUI(SDL_Window* window, Application * game)
 				++count;
 				ss.str("");
 			}
-			//ImGui::TreePop();
 
 			for (auto& node : game->node_list)
 			{
