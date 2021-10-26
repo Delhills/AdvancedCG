@@ -19,6 +19,8 @@ public:
 	unsigned int material_selected = 0;
 	unsigned int texture_selected = 3;
 
+	float distance_to_cam = 0;
+
 	SceneNode();
 	SceneNode(const char* name);
 	~SceneNode();

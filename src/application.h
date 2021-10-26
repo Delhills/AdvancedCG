@@ -33,6 +33,7 @@ public:
 	Skybox* sky; //The actual skybox
 
 	Vector3 ambient_light; //Ambient light vector
+	Texture* BRDFlut;
 
 	//window
 	SDL_Window* window;

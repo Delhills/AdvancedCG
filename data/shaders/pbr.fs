@@ -48,9 +48,9 @@ const float INV_GAMMA = 1.0 / GAMMA;
 
 struct PBRMat
 {
-	vec4 albedo;
-	vec3 N;
+	vec3 base_color;
 	vec3 emission;
+	vec3 N;
 	vec3 F_0;
 	vec3 diffuse_color;
 	float roughness;
@@ -180,10 +180,10 @@ void getMaterialProperties(inout PBRMat material)
 {
 	material.opacity = texture2D(u_opacity_texture, v_uv).x;
 
-	material.albedo = u_color * texture2D(u_texture, v_uv);
-	material.albedo.xyz = gamma_to_linear(material.albedo.xyz);
-	material.emission.xyz = texture2D(u_emissive_texture, v_uv).xyz;
-	material.emission.xyz = gamma_to_linear(material.emission.xyz);
+	material.base_color = u_color.xyz * texture2D(u_texture, v_uv).xyz;
+	material.base_color = gamma_to_linear(material.base_color);
+	material.emission = texture2D(u_emissive_texture, v_uv);
+	material.emission = gamma_to_linear(material.emission);
 	
 	vec3 normal = normalize(v_normal);
 	material.N = texture2D(u_normal_texture, v_uv).xyz;
@@ -203,8 +203,8 @@ void getMaterialProperties(inout PBRMat material)
 	material.ao = texture2D(u_ao_texture, v_uv).x;
 
 	vec3 F0 = vec3(0.04); //common material
-	material.F_0 = mix( F0, material.albedo.xyz, material.metallic );
-	material.diffuse_color = (1.0 - material.metallic) * material.albedo.xyz; 
+	material.F_0 = mix( F0, material.base_color.xyz, material.metallic );
+	material.diffuse_color = (1.0 - material.metallic) * material.base_color.xyz; 
 }
 
 vec3 getPixelColor(PBRMat material)
@@ -219,7 +219,7 @@ vec3 getPixelColor(PBRMat material)
 	//compute the IBL
 	vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
 	vec3 R = reflect(-V,N);
-	vec2 uv_lut = vec2(clamp(NdotV, 0.0, 1.0), clamp(material.roughness, 0.01, 0.99));
+	vec2 uv_lut = vec2(NdotV, material.roughness);
 	vec2 brdf2D = texture2D(u_lut, uv_lut);
 
 	vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
@@ -254,12 +254,12 @@ vec3 getPixelColor(PBRMat material)
 			//Specular component
 			vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
 
-			vec3 direct_light = (f_diff + f_specular) * u_light_intensity[i] * u_light_color[i]; 
+			vec3 direct_light = (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i]; 
 			color += direct_light;
 		}
 	}
 
-	color += material.emission.xyz;
+	color += material.emission;
 
 	return color;
 }
@@ -284,7 +284,7 @@ void main()
 	// 5. Any extra texture to apply after tonemapping
 	// ...
 	if (u_output == 1)
-		color = vec4(material.albedo.xyz, 1.0);
+		color = vec4(material.base_color, 1.0);
 
 	// Last step: to gamma space
 	// ...
@@ -297,6 +297,5 @@ void main()
 	if (u_output == 4)
 		color = vec4(material.N, 1.0);
 
-	if (gl_FrontFacing) 
-		gl_FragColor = vec4(color, material.opacity);
+	gl_FragColor = vec4(color, material.opacity);
 }

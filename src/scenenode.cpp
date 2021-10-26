@@ -17,6 +17,8 @@ SceneNode::SceneNode()
 	material = new PBRMaterial();
 	material->texture = Texture::Get("data/models/helmet/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
+
+	distance_to_cam = 0;
 }
 
 
@@ -30,6 +32,8 @@ SceneNode::SceneNode(const char * name)
 	material = new PhongMaterial();
 	material->texture = Texture::Get("data/models/ball/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
+
+	distance_to_cam = 0;
 }
 
 SceneNode::~SceneNode()

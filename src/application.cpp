@@ -11,7 +11,7 @@
 #include "extra/imgui/imgui.h"
 #include "extra/imgui/imgui_impl_sdl.h"
 #include "extra/imgui/imgui_impl_opengl3.h"
-
+#include <algorithm>
 #include <cmath>
 
 bool render_wireframe = false;
@@ -45,7 +45,7 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
 	std::string geometry[5] = {"ball", "basic", "helmet", "bench", "lantern"};
-	Texture::Get("data/brdfLUT.png");
+	BRDFlut = Texture::Get("data/brdfLUT.png", false, GL_CLAMP_TO_EDGE);
 	for (int i = 0; i < 5; ++i)
 	{
 		Texture::Get(("data/models/" + geometry[i] + "/albedo.png").c_str());
@@ -94,6 +94,9 @@ void Application::render(void)
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
+	if (camera)
+		std::sort(node_list.begin(), node_list.end(), compareNodes);
+
 	for (size_t i = 0; i < node_list.size(); i++) {
 		node_list[i]->render(camera);
 
@@ -110,6 +113,14 @@ void Application::update(double seconds_elapsed)
 {
 	float speed = seconds_elapsed * 10; //the speed is defined by the seconds_elapsed so it goes constant
 	float orbit_speed = seconds_elapsed * 1;
+
+	for (int i = 0; i < node_list.size(); i++)
+	{
+		SceneNode* node = node_list[i];
+		BoundingBox world_bounding = transformBoundingBox(node->model, node->mesh->box);
+		if (camera)
+			node->distance_to_cam = camera->eye.distance(world_bounding.center);
+	}
 	
 	//example
 	float angle = seconds_elapsed * 10.f * DEG2RAD;

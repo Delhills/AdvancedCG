@@ -478,3 +478,8 @@ char* fetchBufferVec4(char* data, std::vector<Vector4>& vector)
 	memcpy(&vector[0], &floats[0], sizeof(float)*floats.size());
 	return data;
 }
+
+bool compareNodes(SceneNode* a, SceneNode* b)
+{
+	return a->distance_to_cam > b->distance_to_cam;
+}

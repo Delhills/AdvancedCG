@@ -231,7 +231,6 @@ PBRMaterial::PBRMaterial()
 	roughness_texture = NULL;
 	emissive_texture = Texture::Get("data/models/helmet/emissive.png");
 	opacity_texture = Texture::getWhiteTexture();
-	BRDFlut = Texture::Get("data/brdfLUT.png");
 
 	normal = 1.0;
 	roughness = 1.0;
@@ -249,7 +248,6 @@ PBRMaterial::~PBRMaterial()
 	roughness_texture = NULL;
 	emissive_texture = NULL;
 	opacity_texture = NULL;
-	BRDFlut = Texture::Get("data/brdfLUT.png");
 }
 
 void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
@@ -272,7 +270,7 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 	}
 	shader->setUniform("u_opacity_texture", opacity_texture, 5);
 	shader->setUniform("u_ao_texture", ao_texture, 6);
-	shader->setUniform("u_lut", Texture::Get("data/brdfLUT.png"), 7);
+	shader->setUniform("u_lut", Application::instance->BRDFlut, 7);
 
 	SkyboxMaterial* sky = (SkyboxMaterial*)Application::instance->sky->material;
 	shader->setUniform("u_environment_texture", sky->texture, 8);
@@ -295,6 +293,10 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		glDepthFunc(GL_LEQUAL); 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
+
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+		glFrontFace(GL_CW);
 
 		//enable shader
 		shader->enable();
@@ -326,10 +328,16 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 
 		mesh->render(GL_TRIANGLES); //Render the mesh for every light
 	}
+
+	glDisable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
+	glDepthFunc(GL_LESS); //as default
+
 }
 
 void PBRMaterial::renderInMenu()
 {
+	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
 	ImGui::DragFloat("Metalness", (float*)&metalness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Roughness", (float*)&roughness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Normal Scale", (float*)&normal, 0.01f, -1.0f, 2.0f);
@@ -340,7 +348,6 @@ void PBRMaterial::setTexture(std::string geometry, int mesh)
 	StandardMaterial::setTexture(geometry, mesh);
 
 	normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
-	BRDFlut = Texture::Get("data/brdfLUT.png");
 
 	ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
 	if (ao_texture == NULL)
@@ -367,47 +374,3 @@ void PBRMaterial::setTexture(std::string geometry, int mesh)
 		roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
 	}
 }
-
-/*
-//Establecemos un multi pass render
-glDepthFunc(GL_LEQUAL);
-glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-//enable shader
-shader->enable();
-
-//upload uniforms
-setUniforms(camera, model);
-
-//MULTI PASS RENDER
-float first_pass = 1.0;
-std::vector< Light* > lights = Application::instance->light_list;
-shader->setUniform("u_first_pass", first_pass);
-
-//Use all the lights
-for (int i = 0; i < lights.size(); ++i)
-{
-	Light* light = lights[i];
-
-	if (i != 0) //Blending on after first pass and no ambient light
-	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		first_pass = 0.0;
-		shader->setUniform("u_first_pass", first_pass);
-	}
-
-	//Pass light parameters
-	shader->setUniform("u_light_position", light->model.getTranslation());
-	shader->setUniform("u_light_intensity", light->intensity);
-	shader->setUniform("u_light_color", light->color);
-
-	mesh->render(GL_TRIANGLES); //Render the mesh for every light
-}
-
-//disable shader
-shader->disable();
-
-glDisable(GL_BLEND);
-glDepthFunc(GL_LESS); //as default
-*/

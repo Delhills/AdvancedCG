@@ -103,7 +103,6 @@ public:
 	Texture* ao_texture;
 	Texture* emissive_texture;
 	Texture* opacity_texture;
-	Texture* BRDFlut;
 
 	float roughness;
 	float metalness;

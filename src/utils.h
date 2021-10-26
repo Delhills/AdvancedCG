@@ -10,6 +10,7 @@
 
 #include "includes.h"
 #include "framework.h"
+#include "scenenode.h"
 
 //General functions **************
 long getTime();
@@ -47,5 +48,5 @@ char* fetchBufferVec3u(char* data, std::vector<Vector3u>& vector);
 char* fetchBufferVec4ub(char* data, std::vector<Vector4ub>& vector);
 char* fetchBufferVec4(char* data, std::vector<Vector4>& vector);
 
-
+bool compareNodes(SceneNode* a, SceneNode* b);
 #endif

@@ -331,6 +331,11 @@ void Camera::renderInMenu()
 
 	if (changed)
 		this->lookAt(eye, center, up);
+
+	if (ImGui::Button("Reset Camera", ImVec2(200.0, 20.0)))
+	{
+		this->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
+	}
 }
 
 char Camera::testBoxInFrustum(const Vector3& center, const Vector3& halfsize)
