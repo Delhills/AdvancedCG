@@ -18,6 +18,11 @@ SceneNode::SceneNode()
 	material->texture = Texture::Get("data/models/helmet/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
 
+	mesh_selected = 2;
+	material_selected = 0;
+	texture_selected = 3;
+
+	//Setting distance to cam to minimum
 	distance_to_cam = 0;
 }
 
@@ -33,6 +38,11 @@ SceneNode::SceneNode(const char * name)
 	material->texture = Texture::Get("data/models/ball/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
 
+	mesh_selected = 2;
+	material_selected = 0;
+	texture_selected = 3;
+
+	//Setting distance to cam to minimum
 	distance_to_cam = 0;
 }
 
@@ -182,7 +192,6 @@ Light::Light()
 	intensity = 1.0;
 	color = vec3(1.0f, 1.0f, 1.0f);
 
-
 	//Not adding a node name id
 	lastNameId--;
 }
@@ -217,6 +226,7 @@ Skybox::Skybox()
 	material->texture = new Texture();
 	HDRE* hdre = HDRE::Get("data/environments/PANORAMA.hdre");
 
+	//Setting the different cubemap levels
 	material->texture->cubemapFromHDRE(hdre, 0);
 	((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
 	((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
@@ -262,71 +272,3 @@ void Skybox::renderInMenu()
 		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
 	}
 }
-
-/*switch (mesh_selected)
-			{
-			case 0: 
-				mesh = Mesh::Get("data/meshes/sphere.obj"); 
-				material->texture = Texture::Get("data/models/ball/albedo.png"); 
-				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/ball/normal.png");
-				((PBRMaterial*)material)->ao_texture = Texture::getWhiteTexture();
-				((PBRMaterial*)material)->metallic_roughness_texture = NULL;
-				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/ball/metalness.png");
-				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/ball/roughness.png");
-				((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
-				((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
-				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-				texture_selected = 0; 
-				break;
-			case 1: 
-				mesh = Mesh::Get("data/meshes/box.ASE");
-				material->texture = Texture::Get("data/models/basic/albedo.png"); 
-				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/basic/normal.png");
-				((PBRMaterial*)material)->ao_texture = Texture::getWhiteTexture();
-				((PBRMaterial*)material)->metallic_roughness_texture = NULL;
-				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/basic/metalness.png");
-				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/basic/roughness.png");
-				((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
-				((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
-				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-				texture_selected = 1; 
-				break;
-			case 2: 
-				mesh = Mesh::Get("data/models/helmet/helmet.obj"); 
-				material->texture = Texture::Get("data/models/helmet/albedo.png");
-				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/helmet/normal.png");
-				((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/helmet/ao.png");
-				((PBRMaterial*)material)->metallic_roughness_texture = Texture::Get("data/models/helmet/roughness.png");
-				((PBRMaterial*)material)->metallic_texture = NULL;
-				((PBRMaterial*)material)->roughness_texture = NULL;
-				((PBRMaterial*)material)->emissive_texture = Texture::Get("data/models/helmet/emissive.png");
-				((PBRMaterial*)material)->opacity_texture = Texture::getWhiteTexture();
-				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-				texture_selected = 3; 
-				break;
-			case 3: 
-				mesh = Mesh::Get("data/models/bench/bench.obj"); 
-				material->texture = Texture::Get("data/models/lantern/albedo.png");
-				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/lantern/normal.png");
-				((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/lantern/ao.png");
-				((PBRMaterial*)material)->metallic_roughness_texture = NULL;
-				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/lantern/metalness.png");
-				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/lantern/roughness.png");
-				((PBRMaterial*)material)->emissive_texture = Texture::Get("data/models/lantern/emissive.png");
-				((PBRMaterial*)material)->opacity_texture = Texture::Get("data/models/lantern/opacity.png");
-				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-				texture_selected = 2; 
-				break;
-			case 4:
-				mesh = Mesh::Get("data/models/lantern/lantern.obj");
-				material->texture = Texture::Get("data/models/lantern/albedo.png");
-				((PBRMaterial*)material)->normal_texture = Texture::Get("data/models/lantern/normal.png");
-				((PBRMaterial*)material)->ao_texture = Texture::Get("data/models/lantern/ao.png");
-				((PBRMaterial*)material)->metallic_roughness_texture = NULL;
-				((PBRMaterial*)material)->metallic_texture = Texture::Get("data/models/lantern/metalness.png");
-				((PBRMaterial*)material)->roughness_texture = Texture::Get("data/models/lantern/roughness.png");
-				((PBRMaterial*)material)->emissive_texture = Texture::getBlackTexture();
-				((PBRMaterial*)material)->opacity_texture = Texture::Get("data/models/lantern/opacity.png");
-				((PBRMaterial*)material)->BRDFlut = Texture::Get("data/brdfLUT.png");
-				texture_selected = 4; 
-				break;*/

@@ -11,7 +11,6 @@ varying vec4 v_color;
 uniform sampler2D u_texture;
 uniform sampler2D u_normal_texture;
 uniform sampler2D u_emissive_texture;
-uniform sampler2D u_metallic_roughness_texture;
 uniform sampler2D u_ao_texture;
 uniform sampler2D u_lut;
 uniform sampler2D u_opacity_texture;
@@ -21,14 +20,15 @@ uniform samplerCube u_environment_texture;
 uniform mat4 u_model;
 
 //here create uniforms for all the data we need here
-uniform vec3 u_light_position[100];
-uniform float u_light_intensity[100];
-uniform vec3 u_light_color[100];
+const int MAX_LIGHTS = 100;
+uniform vec3 u_light_position[MAX_LIGHTS];
+uniform float u_light_intensity[MAX_LIGHTS];
+uniform vec3 u_light_color[MAX_LIGHTS];
 
 uniform vec3 u_camera_position;
 uniform vec4 u_color;
 uniform float u_first_pass;
-uniform float u_metallic_roughness;
+uniform bool u_metallic_roughness;
 uniform float u_metallic_factor;
 uniform float u_roughness_factor;
 uniform float u_normal_factor;
@@ -40,7 +40,6 @@ uniform samplerCube u_texture_prem_3;
 uniform samplerCube u_texture_prem_4;
 
 uniform float u_output;
-
 uniform float u_num_lights;
 
 const float GAMMA = 2.2;
@@ -124,7 +123,6 @@ vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-
 /* 
 	Convert 0-Inf range to 0-1 range so we can
 	display info on screen
@@ -176,89 +174,115 @@ float compute_G(float roughness, float NdotL, float NdotV)
 	return G1 * G2;
 }
 
-void getMaterialProperties(inout PBRMat material)
+void getMaterialProperties(inout PBRMat material, vec3 V)
 {
-	material.opacity = texture2D(u_opacity_texture, v_uv).x;
-
+	//Define base color
 	material.base_color = u_color.xyz * texture2D(u_texture, v_uv).xyz;
 	material.base_color = gamma_to_linear(material.base_color);
+
+	//Define emission
 	material.emission = texture2D(u_emissive_texture, v_uv);
 	material.emission = gamma_to_linear(material.emission);
 	
+	//Define normals
 	vec3 normal = normalize(v_normal);
 	material.N = texture2D(u_normal_texture, v_uv).xyz;
-	material.N = mix(normal, perturbNormal(normal, v_world_position, v_uv, material.N), u_normal_factor);
+	material.N = mix(normal, perturbNormal(normal, V, v_uv, material.N), u_normal_factor); //Mix to enchance normals
 
+	//If metallic and roughness are in the same texture...
 	if (u_metallic_roughness)
 	{
-		vec2 metallic_roughness = texture2D(u_metallic_roughness_texture, v_uv).yz;
+		vec2 metallic_roughness = texture2D(u_roughness_texture, v_uv).yz; //Roughness G, Metalness B
 		material.roughness = metallic_roughness.x * u_roughness_factor;
 		material.metallic = metallic_roughness.y * u_metallic_factor;
 	}
-	else{	
+	else{	//If not...
 		material.roughness = texture2D(u_roughness_texture, v_uv).x * u_roughness_factor;
 		material.metallic = texture2D(u_metallic_texture, v_uv).x * u_metallic_factor;
 	}
 
+	//Ambient occlusions and opacity
 	material.ao = texture2D(u_ao_texture, v_uv).x;
+	material.opacity = texture2D(u_opacity_texture, v_uv).x;
 
+	//Define the material diffuse color and F0
 	vec3 F0 = vec3(0.04); //common material
 	material.F_0 = mix( F0, material.base_color.xyz, material.metallic );
 	material.diffuse_color = (1.0 - material.metallic) * material.base_color.xyz; 
 }
 
-vec3 getPixelColor(PBRMat material)
+vec3 computeIndirectLight(PBRMat material, vec3 V, float NdotV)
 {
-	vec3 N, V, L, H;
-	N = material.N;
-	V = normalize(u_camera_position - v_world_position);
-
-	//Compute dot products
-	float NdotV = max(dot(N,V),0.0);
-	
 	//compute the IBL
 	vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
-	vec3 R = reflect(-V,N);
+	vec3 R = reflect(-V, material.N);
 	vec2 uv_lut = vec2(NdotV, material.roughness);
 	vec2 brdf2D = texture2D(u_lut, uv_lut);
 
+	//Specular IBL
 	vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
 	vec3 SpecularBRDF = F_IBL * brdf2D.x + brdf2D.y;
 	vec3 SpecularIBL = specularSample * SpecularBRDF;
 
+	//Diffuse IBL
 	vec3 kD_IBL = vec3(1.0) - F_IBL;
-	vec3 diffuseSample = getReflectionColor(N, 1.0).xyz;
+	vec3 diffuseSample = getReflectionColor(material.N, 1.0).xyz;
 	vec3 DiffuseIBL = (diffuseSample * material.diffuse_color) * kD_IBL;
-	vec3 indirect_light = (SpecularIBL + DiffuseIBL) * material.ao;
-	vec3 color = indirect_light;
 
-	for (float i = 0.0; i < 100; ++i)
+	//Result
+	return (SpecularIBL + DiffuseIBL) * material.ao;
+}
+
+vec3 computeDirectLight(PBRMat material, vec3 V, float NdotV)
+{
+	//Declare vectors and dot produts
+	vec3 L, H;
+	float NdotL, NdotH, LdotH;
+
+	//Initial direct light
+	vec3 direct_light = vec3(0.0);
+	
+	//Use all lights
+	for (int i = 0; i < MAX_LIGHTS; ++i)
 	{
-		if (i <= u_num_lights)
+		if (i < u_num_lights)
 		{
+			//Compute vectors
 			L = normalize(u_light_position[i] - v_world_position);
 			H = normalize(L+V);
-
-			vec3 NdotL = max(dot(N,L),0.0);
-			vec3 NdotH = max(dot(N,H),0.0);
-			vec3 LdotH = max(dot(L,H),0.0);
-
+	
+			//Compute dot products
+			NdotL = max(dot(material.N,L),0.0);
+			NdotH = max(dot(material.N,H),0.0);
+			LdotH = max(dot(L,H),0.0);
+	
 			//Compute BRDF elements
 			vec3 F = compute_F(material.F_0, LdotH); 
 			float D = compute_D(material.roughness, NdotH);
 			float G = compute_G(material.roughness, NdotL, NdotV); 
-
+	
 			//Diffuse component
 			vec3 f_diff = material.diffuse_color * RECIPROCAL_PI * NdotL;
-
+	
 			//Specular component
 			vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
-
-			vec3 direct_light = (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i]; 
-			color += direct_light;
+	
+			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i]; 
 		}
 	}
 
+	return direct_light;
+}
+
+vec3 getPixelColor(PBRMat material, vec3 V, float NdotV)
+{
+	//compute IBL
+	vec3 color = computeIndirectLight(material, V, NdotV);
+
+	//Compute direct light
+	color += computeDirectLight(material, V, NdotV);
+
+	//Add emissions
 	color += material.emission;
 
 	return color;
@@ -267,29 +291,32 @@ vec3 getPixelColor(PBRMat material)
 
 void main()
 {
-	// 1. Create Material
+	//Create Material
 	PBRMat material;
 	
-	// 2. Fill Material
-	getMaterialProperties(material);
+	//View vector and dot product with the normal
+	vec3 V = normalize(u_camera_position - v_world_position);
 
-	// 3. Shade (Direct + Indirect)
+	//Fill Material
+	getMaterialProperties(material, V);
+
+	//Dot product with the normal
+	float NdotV = max(dot(material.N,V),0.0);
+
 	//Get pixel color
-	vec3 color = getPixelColor(material);
+	vec3 color = getPixelColor(material, V, NdotV);
 
-	// 4. Apply Tonemapping
-	// ...
+	//Apply Tonemapping
 	color = toneMapUncharted(color);
 
-	// 5. Any extra texture to apply after tonemapping
-	// ...
+	//Debugger albedo
 	if (u_output == 1)
 		color = vec4(material.base_color, 1.0);
 
 	// Last step: to gamma space
-	// ...
 	color = linear_to_gamma(color);
 ;
+	//Not color debugger outputs
 	if (u_output == 2)
 		color = vec4(vec3(material.roughness), 1.0);
 	if (u_output == 3)
@@ -297,5 +324,6 @@ void main()
 	if (u_output == 4)
 		color = vec4(material.N, 1.0);
 
-	gl_FragColor = vec4(color, material.opacity);
+	//Output color
+	gl_FragColor = vec4(color, u_color.w * material.opacity);
 }

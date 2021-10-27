@@ -15,11 +15,11 @@ public:
 
 	static unsigned int lastNameId;
 
-	unsigned int mesh_selected = 2;
-	unsigned int material_selected = 0;
-	unsigned int texture_selected = 3;
+	unsigned int mesh_selected;
+	unsigned int material_selected;
+	unsigned int texture_selected;
 
-	float distance_to_cam = 0;
+	float distance_to_cam; //Distance to the camera for sorting computations
 
 	SceneNode();
 	SceneNode(const char* name);
@@ -42,8 +42,11 @@ public:
 
 	static unsigned int lastLightId;
 
+	//Phong components
 	Vector3 diffuse;
 	Vector3 specular;
+
+	//PBR components
 	float intensity;
 	Vector3 color;
 

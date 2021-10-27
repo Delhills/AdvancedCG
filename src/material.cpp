@@ -3,6 +3,8 @@
 #include "application.h"
 #include "extra/hdre.h"
 
+const int MAX_LIGHTS = 100;
+
 StandardMaterial::StandardMaterial()
 {
 	color = vec4(1.f, 1.f, 1.f, 1.f);
@@ -224,26 +226,27 @@ SkyboxMaterial::~SkyboxMaterial()
 
 PBRMaterial::PBRMaterial()
 {
+	//Set PBR shader
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
+
+	//Set helmet textures as default
 	normal_texture = Texture::Get("data/models/helmet/normal.png");
 	ao_texture = Texture::Get("data/models/helmet/ao.png");
-	metallic_roughness_texture = Texture::Get("data/models/helmet/roughness.png");
 	metallic_texture = NULL;
-	roughness_texture = NULL;
+	roughness_texture = Texture::Get("data/models/helmet/roughness.png");;
 	emissive_texture = Texture::Get("data/models/helmet/emissive.png");
 	opacity_texture = Texture::getWhiteTexture();
 
+	metallic_roughness = true;
 	normal = 1.0;
 	roughness = 1.0;
 	metalness = 1.0;
-
-	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
 }
 
 PBRMaterial::~PBRMaterial()
 {
 	normal_texture = NULL;
 	ao_texture = NULL;
-	metallic_roughness_texture = NULL;
 	metallic_texture = NULL;
 	roughness_texture = NULL;
 	emissive_texture = NULL;
@@ -252,26 +255,27 @@ PBRMaterial::~PBRMaterial()
 
 void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 {
+	//Set common uniforms
 	StandardMaterial::setUniforms(camera, model);
 
+	//Set other textures
 	shader->setUniform("u_normal_texture", normal_texture, 1);
 	shader->setUniform("u_emissive_texture", emissive_texture, 2);
+	shader->setUniform("u_opacity_texture", opacity_texture, 3);
+	shader->setUniform("u_ao_texture", ao_texture, 4);
+	shader->setUniform("u_lut", Application::instance->BRDFlut, 5);
 
-	if (metallic_roughness_texture)
-	{
-		shader->setUniform("u_metallic_roughness_texture", metallic_roughness_texture, 3);
-		shader->setUniform("u_metallic_roughness", 1.0);
-	}
+	//Set metallic and roughness depending on how are stored
+	shader->setUniform("u_metallic_roughness", metallic_roughness);
+	if (metallic_roughness)
+		shader->setUniform("u_roughness_texture", roughness_texture, 6);
 	else
 	{
-		shader->setUniform("u_metallic_roughness", 0.0);
-		shader->setUniform("u_roughness_texture", roughness_texture, 3);
-		shader->setUniform("u_metallic_texture", metallic_texture, 4);
+		shader->setUniform("u_roughness_texture", roughness_texture, 6);
+		shader->setUniform("u_metallic_texture", metallic_texture, 7);
 	}
-	shader->setUniform("u_opacity_texture", opacity_texture, 5);
-	shader->setUniform("u_ao_texture", ao_texture, 6);
-	shader->setUniform("u_lut", Application::instance->BRDFlut, 7);
 
+	//Set enviroment related cubemaps
 	SkyboxMaterial* sky = (SkyboxMaterial*)Application::instance->sky->material;
 	shader->setUniform("u_environment_texture", sky->texture, 8);
 	shader->setUniform("u_texture_prem_0", sky->texture_prem_0, 9);
@@ -289,11 +293,10 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 {
 	if (mesh && shader)
 	{
-		//Establecemos un single pass render
+		//Setting flags
 		glDepthFunc(GL_LEQUAL); 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
-
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 		glFrontFace(GL_CW);
@@ -308,9 +311,9 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 		std::vector< Light* > lights = Application::instance->light_list;
 
 		//Defining the vectors that will be passed to the GPU
-		Vector3 light_position[100];
-		Vector3 light_color[100];
-		float light_intensity[100];
+		Vector3 light_position[MAX_LIGHTS];
+		Vector3 light_color[MAX_LIGHTS];
+		float light_intensity[MAX_LIGHTS];
 
 		//Filling the vectors
 		for (int i = 0; i < lights.size(); ++i)
@@ -321,23 +324,23 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 			light_intensity[i] = light->intensity;
 		}
 
-		shader->setUniform3Array("u_light_position", (float*)&light_position, 100);
-		shader->setUniform3Array("u_light_color", (float*)&light_color, 100);
-		shader->setUniform1Array("u_light_intensity", (float*)&light_intensity, 100);
+		shader->setUniform3Array("u_light_position", (float*)&light_position, MAX_LIGHTS);
+		shader->setUniform3Array("u_light_color", (float*)&light_color, MAX_LIGHTS);
+		shader->setUniform1Array("u_light_intensity", (float*)&light_intensity, MAX_LIGHTS);
 		shader->setUniform1("u_num_lights", (float)lights.size());
 
-		mesh->render(GL_TRIANGLES); //Render the mesh for every light
+		mesh->render(GL_TRIANGLES); //Render the mesh for all the lights
 	}
 
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
-	glDepthFunc(GL_LESS); //as default
+	glDepthFunc(GL_LESS);
 
 }
 
 void PBRMaterial::renderInMenu()
 {
-	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
+	ImGui::ColorEdit4("Color", (float*)&color); // Edit 3 floats representing a color
 	ImGui::DragFloat("Metalness", (float*)&metalness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Roughness", (float*)&roughness, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Normal Scale", (float*)&normal, 0.01f, -1.0f, 2.0f);
@@ -363,13 +366,13 @@ void PBRMaterial::setTexture(std::string geometry, int mesh)
 
 	if (mesh == 2)
 	{
-		metallic_roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
+		metallic_roughness = true;
 		metallic_texture = NULL;
-		roughness_texture = NULL;
+		roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());;
 	}
 	else
 	{
-		metallic_roughness_texture = NULL;
+		metallic_roughness = false;
 		metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
 		roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
 	}
