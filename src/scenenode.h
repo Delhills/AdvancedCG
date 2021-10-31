@@ -8,6 +8,14 @@
 #include "camera.h"
 #include "material.h"
 
+enum MeshType {
+	SPHERE,
+	BOX,
+	HELMET,
+	BENCH,
+	LANTERN
+};
+
 class Light;
 
 class SceneNode {
