@@ -268,6 +268,8 @@ vec3 computeDirectLight(PBRMat material, vec3 V, float NdotV)
 	
 			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i] * NdotL; 
 		}
+		else
+			break;
 	}
 
 	return direct_light;
