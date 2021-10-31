@@ -188,7 +188,7 @@ void getMaterialProperties(inout PBRMat material, vec3 V)
 	//Define normals
 	vec3 normal = normalize(v_normal);
 	material.N = texture2D(u_normal_texture, v_uv).xyz;
-	material.N = mix(normal, perturbNormal(normal, V, v_uv, material.N), u_normal_factor); //Mix to enchance normals
+	material.N = mix(normal, perturbNormal(normal, -V, v_uv, material.N), u_normal_factor); //Mix to enchance normals
 
 	//If metallic and roughness are in the same texture...
 	if (u_metallic_roughness)
