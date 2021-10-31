@@ -71,6 +71,7 @@ public:
 class SkyboxMaterial : public StandardMaterial {
 public:
 
+	//Different HDRe level cubemaps
 	Texture* texture_prem_0;
 	Texture* texture_prem_1;
 	Texture* texture_prem_2;
@@ -106,8 +107,10 @@ public:
 	Texture* emissive_texture;
 	Texture* opacity_texture;
 
+	//If the metalness and roughness are in the same texture
 	bool metallic_roughness;
 
+	//Material factors
 	float roughness;
 	float metalness;
 	float normal;
@@ -119,6 +122,7 @@ public:
 	void render(Mesh* mesh, Matrix44 model, Camera* camera);
 	void renderInMenu();
 
+	//Function to set all the textures
 	void setTexture(std::string geometry, int mesh);
 };
 

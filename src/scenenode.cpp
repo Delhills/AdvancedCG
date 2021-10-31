@@ -12,12 +12,11 @@ SceneNode::SceneNode()
 	//Setting name
 	this->name = std::string("Node" + std::to_string(lastNameId++));
 
-	//Setting default mesh and material
+	//Setting default mesh and material as the helmet
 	mesh = Mesh::Get("data/models/helmet/helmet.obj");
 	material = new PBRMaterial();
 	material->texture = Texture::Get("data/models/helmet/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
-
 	mesh_selected = 2;
 	material_selected = 0;
 	texture_selected = 3;
@@ -32,12 +31,11 @@ SceneNode::SceneNode(const char * name)
 	//Setting name
 	this->name = name;
 
-	//Setting default mesh and material
+	//Setting default mesh and material as the helmet
 	mesh = Mesh::Get("data/meshes/sphere.obj");
 	material = new PhongMaterial();
 	material->texture = Texture::Get("data/models/ball/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
-
 	mesh_selected = 2;
 	material_selected = 0;
 	texture_selected = 3;
@@ -88,6 +86,7 @@ void SceneNode::renderInMenu()
 		changed |= ImGui::Combo("Material Type", (int*)&material_selected, "PBR\0PHONG\0REFLECTIVE\0TEXTURED\0WIREFRAME\0");
 		if (changed)
 		{
+			//Selecting the material type
 			switch (material_selected)
 			{
 			case 0: material = new PBRMaterial(); break;
@@ -97,8 +96,10 @@ void SceneNode::renderInMenu()
 			case 4: material = new WireframeMaterial(); break;
 			}
 
-			if (material_selected == 0 || material_selected == 2)
+			//If it is a colored (light) material
+			if (material_selected == 0 || material_selected == 1 || material_selected == 3)
 			{
+				//Selecting the geometry
 				std::string geometry;
 				switch (mesh_selected)
 				{
@@ -109,7 +110,7 @@ void SceneNode::renderInMenu()
 				case 4: geometry = "lantern"; break;
 				}
 
-				material->setTexture(geometry, mesh_selected);
+				material->setTexture(geometry, mesh_selected); //Setting the textures
 			}
 		}
 
@@ -124,6 +125,7 @@ void SceneNode::renderInMenu()
 		changed |= ImGui::Combo("Texture", (int*)&texture_selected, "BALL\0BOX\0BENCH\0HELMET\0LANTERN\0");
 		if (changed)
 		{
+			//Selecting the geometry which textures will be applied
 			std::string geometry;
 			switch (texture_selected)
 			{
@@ -133,7 +135,7 @@ void SceneNode::renderInMenu()
 			case 3: geometry = "helmet"; break;
 			case 4: geometry = "lantern"; break;
 			}
-			material->setTexture(geometry, mesh_selected);
+			material->setTexture(geometry, mesh_selected); //Setting the textures
 		}
 
 		ImGui::TreePop();
@@ -146,6 +148,7 @@ void SceneNode::renderInMenu()
 		changed |= ImGui::Combo("Mesh", (int*)&mesh_selected, "SPHERE\0BOX\0HELMET\0BENCH\0LANTERN\0");
 		if (changed)
 		{
+			//Select the corresponding geometry
 			std::string geometry;
 			switch (mesh_selected)
 			{
@@ -162,12 +165,12 @@ void SceneNode::renderInMenu()
 			case 2: 
 				mesh = Mesh::Get("data/models/helmet/helmet.obj"); 
 				geometry = "helmet";
-				texture_selected = 3; 
+				texture_selected = 3; //In texture menu they are changed, sorry
 				break;
 			case 3: 
 				mesh = Mesh::Get("data/models/bench/bench.obj"); 
 				geometry = "bench";
-				texture_selected = 2; 
+				texture_selected = 2; //In texture menu they are changed, sorry
 				break;
 			case 4:
 				mesh = Mesh::Get("data/models/lantern/lantern.obj");
@@ -176,7 +179,7 @@ void SceneNode::renderInMenu()
 				break;
 			}
 
-			material->setTexture(geometry, mesh_selected);
+			material->setTexture(geometry, mesh_selected); //Set the textures
 		}
 		ImGui::TreePop();
 	}
@@ -206,12 +209,14 @@ void Light::renderInMenu()
 	ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
 	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
 
+	//PBR parameters
 	if (ImGui::TreeNode("PBR")) {
 		ImGui::DragFloat("Intensity", (float*)&intensity, 0.1f, 0.0f, 100.f);
 		ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
 		ImGui::TreePop();
 	}
 
+	//Phong parameters
 	if (ImGui::TreeNode("Phong")) {
 		ImGui::ColorEdit3("Diffuse Color", (float*)&diffuse); // Edit 3 floats representing a color
 		ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
@@ -261,6 +266,7 @@ void Skybox::renderInMenu()
 	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
 	if (changed)
 	{
+		//Selecting the HDRe
 		HDRE* hdre;
 		switch (environment_selected)
 		{
@@ -271,7 +277,7 @@ void Skybox::renderInMenu()
 		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
 		}
 
-
+		//Setting the different level textures
 		material->texture->cubemapFromHDRE(hdre, 0);
 		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
 		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);

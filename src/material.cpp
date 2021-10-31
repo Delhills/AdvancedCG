@@ -57,6 +57,8 @@ void StandardMaterial::renderInMenu()
 
 void StandardMaterial::setTexture(std::string geometry, int mesh)
 {
+	//In this case the mesh is not used because in this function at the moment is not necessary, 
+	//but since we are overwriting an abstact method we needed, having a more agile code thanks to this functions
 	texture = Texture::Get(("data/models/" + geometry + "/albedo.png").c_str()); //Set albedo texture
 }
 
@@ -245,12 +247,15 @@ PBRMaterial::PBRMaterial()
 
 PBRMaterial::~PBRMaterial()
 {
-	normal_texture = NULL;
-	ao_texture = NULL;
-	metallic_texture = NULL;
-	roughness_texture = NULL;
-	emissive_texture = NULL;
-	opacity_texture = NULL;
+	//Destroy stored data
+	texture->~Texture();
+	normal_texture->~Texture();
+	ao_texture->~Texture();
+	metallic_texture->~Texture();
+	roughness_texture->~Texture();
+	emissive_texture->~Texture();
+	opacity_texture->~Texture();
+	shader->~Shader();
 }
 
 void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)

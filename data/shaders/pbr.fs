@@ -45,6 +45,7 @@ uniform float u_num_lights;
 const float GAMMA = 2.2;
 const float INV_GAMMA = 1.0 / GAMMA;
 
+//Struct for the material
 struct PBRMat
 {
 	vec3 base_color;
@@ -155,22 +156,22 @@ vec3 toneMapUncharted(vec3 color)
 
 vec3 compute_F(vec3 F_0, float LdotH)
 {
-	return F_0 + (1.0 - F_0)*pow((1.0 - LdotH), 5.0);
+	return F_0 + (1.0 - F_0) * pow(clamp(1.0 - LdotH, 0.0, 1.0), 5.0);
 }
 
 float compute_D(float roughness, float NdotH)
 {
-	float a = roughness * roughness;
-	float a2 = a * a;
-	float f = NdotH * NdotH * (a2 - 1.0) + 1.0;
-	return a2 * RECIPROCAL_PI * 1.0 / (f * f);
+	float alpha = roughness * roughness;
+	float alpha2 = alpha * alpha;
+	float f = NdotH * NdotH * (alpha2 - 1.0) + 1.0;
+	return alpha2 * RECIPROCAL_PI * 1.0 / (f * f);
 }
 
 float compute_G(float roughness, float NdotL, float NdotV)
 {
 	float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
-	float G1 = (NdotL / (NdotL * (1.0 - k) + k));
-	float G2 = (NdotV / (NdotV * (1.0 - k) + k));
+	float G1 = NdotL / (NdotL * (1.0 - k) + k);
+	float G2 = NdotV / (NdotV * (1.0 - k) + k);
 	return G1 * G2;
 }
 
@@ -201,22 +202,22 @@ void getMaterialProperties(inout PBRMat material, vec3 V)
 		material.metallic = texture2D(u_metallic_texture, v_uv).x * u_metallic_factor;
 	}
 
-	//Ambient occlusions and opacity
+	//Ambient occlusion and opacity
 	material.ao = texture2D(u_ao_texture, v_uv).x;
 	material.opacity = texture2D(u_opacity_texture, v_uv).x;
 
 	//Define the material diffuse color and F0
 	material.F_0 = mix( vec3(0.04), material.base_color.xyz, material.metallic );
-	material.diffuse_color = (1.0 - material.metallic) * material.base_color.xyz; 
+	material.diffuse_color = mix( material.base_color.xyz, vec3(0.0), material.metallic ); 
 }
 
 vec3 computeIndirectLight(PBRMat material, vec3 V, float NdotV)
 {
-	//compute the IBL
+	//compute IBL needed values
 	vec3 F_IBL = FresnelSchlickRoughness(NdotV, material.F_0, material.roughness);
 	vec3 R = reflect(-V, material.N);
 	vec2 uv_lut = vec2(NdotV, material.roughness);
-	vec2 brdf2D = texture2D(u_lut, uv_lut);
+	vec2 brdf2D = texture2D(u_lut, uv_lut).xy;
 
 	//Specular IBL
 	vec3 specularSample = getReflectionColor(R, material.roughness).xyz;
@@ -224,9 +225,8 @@ vec3 computeIndirectLight(PBRMat material, vec3 V, float NdotV)
 	vec3 SpecularIBL = specularSample * SpecularBRDF;
 
 	//Diffuse IBL
-	vec3 kD_IBL = vec3(1.0) - F_IBL;
 	vec3 diffuseSample = getReflectionColor(material.N, 1.0).xyz;
-	vec3 DiffuseIBL = (diffuseSample * material.diffuse_color) * kD_IBL;
+	vec3 DiffuseIBL = (diffuseSample * material.diffuse_color) * (vec3(1.0) - F_IBL);
 
 	//Result
 	return (SpecularIBL + DiffuseIBL) * material.ao;
@@ -251,9 +251,9 @@ vec3 computeDirectLight(PBRMat material, vec3 V, float NdotV)
 			H = normalize(L+V);
 	
 			//Compute dot products
-			NdotL = max(dot(material.N,L),0.0);
-			NdotH = max(dot(material.N,H),0.0);
-			LdotH = max(dot(L,H),0.0);
+			NdotL = clamp(dot(material.N,L),0.0, 1.0);
+			NdotH = clamp(dot(material.N,H),0.0, 1.0);
+			LdotH = clamp(dot(L,H),0.0, 1.0);
 	
 			//Compute BRDF elements
 			vec3 F = compute_F(material.F_0, LdotH); 
@@ -268,8 +268,6 @@ vec3 computeDirectLight(PBRMat material, vec3 V, float NdotV)
 	
 			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i] * NdotL; 
 		}
-		else
-			break;
 	}
 
 	return direct_light;
@@ -302,7 +300,7 @@ void main()
 	getMaterialProperties(material, V);
 
 	//Dot product with the normal
-	float NdotV = max(dot(material.N,V),0.0);
+	float NdotV = clamp(dot(material.N,V),0.0, 1.0);
 
 	//Get pixel color
 	vec3 color = getPixelColor(material, V, NdotV);
