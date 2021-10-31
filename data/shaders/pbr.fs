@@ -207,8 +207,14 @@ void getMaterialProperties(inout PBRMat material, vec3 V)
 	material.opacity = texture2D(u_opacity_texture, v_uv).x;
 
 	//Define the material diffuse color and F0
+<<<<<<< HEAD
 	material.F_0 = mix( vec3(0.04), material.base_color.xyz, material.metallic );
 	material.diffuse_color = mix( material.base_color.xyz, vec3(0.0), material.metallic ); 
+=======
+	vec3 F0 = vec3(0.04); //common material
+	material.F_0 = mix( F0, material.base_color.xyz, material.metallic );
+	material.diffuse_color = (1.0 - material.metallic) * material.base_color.xyz; 
+>>>>>>> parent of eb2b6dd (final toquesitos)
 }
 
 vec3 computeIndirectLight(PBRMat material, vec3 V, float NdotV)
@@ -261,15 +267,13 @@ vec3 computeDirectLight(PBRMat material, vec3 V, float NdotV)
 			float G = compute_G(material.roughness, NdotL, NdotV); 
 	
 			//Diffuse component
-			vec3 f_diff = material.diffuse_color * RECIPROCAL_PI;
+			vec3 f_diff = material.diffuse_color * RECIPROCAL_PI * NdotL;
 	
 			//Specular component
 			vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
 	
-			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i] * NdotL; 
+			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i]; 
 		}
-		else
-			break;
 	}
 
 	return direct_light;

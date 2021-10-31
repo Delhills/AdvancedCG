@@ -97,12 +97,9 @@ class PBRMaterial : public StandardMaterial
 {
 public:
 
-	//Maps
+	Texture* normal_texture;
 	Texture* metallic_texture;
 	Texture* roughness_texture;
-
-	//Extra maps
-	Texture* normal_texture;
 	Texture* ao_texture;
 	Texture* emissive_texture;
 	Texture* opacity_texture;

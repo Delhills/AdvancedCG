@@ -33,7 +33,7 @@ public:
 	Skybox* sky; //The actual skybox
 
 	Vector3 ambient_light; //Ambient light vector
-	Texture* BRDFlut; //LUT
+	Texture* BRDFlut;
 
 	//window
 	SDL_Window* window;
@@ -70,6 +70,9 @@ public:
 	void onGamepadButtonUp(SDL_JoyButtonEvent event);
 	void onResize(int width, int height);
 	void onFileChanged(const char* filename);
+
+	//skybox
+	void renderSkybox(Texture* skybox, Camera* camera);
 };
 
 

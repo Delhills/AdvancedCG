@@ -94,16 +94,14 @@ void Application::render(void)
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	//We create another list for the sorting because if we not do it the nodes will change their positions in ImGUI
-	std::vector<SceneNode*>list_node = node_list;
 	if (camera)
-		std::sort(list_node.begin(), list_node.end(), compareNodes);
+		std::sort(node_list.begin(), node_list.end(), compareNodes);
 
-	for (size_t i = 0; i < list_node.size(); i++) {
-		list_node[i]->render(camera);
+	for (size_t i = 0; i < node_list.size(); i++) {
+		node_list[i]->render(camera);
 
 		if(render_wireframe)
-			list_node[i]->renderWireframe(camera);
+			node_list[i]->renderWireframe(camera);
 	}
 
 	//Draw the floor grid
