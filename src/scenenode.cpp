@@ -13,9 +13,9 @@ SceneNode::SceneNode()
 	this->name = std::string("Node" + std::to_string(lastNameId++));
 
 	//Setting default mesh and material as the helmet
-	mesh = Mesh::Get("data/models/helmet/helmet.obj");
+	mesh = Mesh::Get("data/models/Lee/Lee.obj");
 	material = new PBRMaterial();
-	material->texture = Texture::Get("data/models/helmet/albedo.png");
+	material->texture = Texture::Get("data/models/Lee/albedo.png");
 	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
 	mesh_selected = 2;
 	material_selected = 0;
@@ -32,10 +32,10 @@ SceneNode::SceneNode(const char * name)
 	this->name = name;
 
 	//Setting default mesh and material as the helmet
-	mesh = Mesh::Get("data/meshes/sphere.obj");
-	material = new PhongMaterial();
-	material->texture = Texture::Get("data/models/ball/albedo.png");
-	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/phong.fs");
+	mesh = Mesh::Get("data/models/Lee/Lee.obj");
+	material = new PBRMaterial();
+	material->texture = Texture::Get("data/models/Lee/albedo.png");
+	material->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
 	mesh_selected = 2;
 	material_selected = 0;
 	texture_selected = 3;

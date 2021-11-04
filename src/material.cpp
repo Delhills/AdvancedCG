@@ -232,11 +232,11 @@ PBRMaterial::PBRMaterial()
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/pbr.fs");
 
 	//Set helmet textures as default
-	normal_texture = Texture::Get("data/models/helmet/normal.png");
-	ao_texture = Texture::Get("data/models/helmet/ao.png");
+	normal_texture = Texture::Get("data/models/Lee/normal.png");
+	ao_texture = Texture::getWhiteTexture();//Texture::Get("data/models/helmet/ao.png");
 	metallic_texture = NULL;
-	roughness_texture = Texture::Get("data/models/helmet/roughness.png");;
-	emissive_texture = Texture::Get("data/models/helmet/emissive.png");
+	roughness_texture = Texture::getBlackTexture();//Texture::Get("data/models/helmet/roughness.png");;
+	emissive_texture = Texture::getBlackTexture();//Texture::Get("data/models/helmet/emissive.png");
 	opacity_texture = Texture::getWhiteTexture();
 
 	metallic_roughness = true;

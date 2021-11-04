@@ -195,8 +195,8 @@ void getMaterialProperties(inout PBRMat material, vec3 V)
 	if (u_metallic_roughness)
 	{
 		vec2 metallic_roughness = texture2D(u_roughness_texture, v_uv).yz; //Roughness G, Metalness B
-		material.roughness = metallic_roughness.x * u_roughness_factor;
-		material.metallic = metallic_roughness.y * u_metallic_factor;
+		material.roughness = u_roughness_factor; //0.4 segun EPIC
+		material.metallic = u_metallic_factor;
 	}
 	else{	//If not...
 		material.roughness = texture2D(u_roughness_texture, v_uv).x * u_roughness_factor;
