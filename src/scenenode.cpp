@@ -125,23 +125,17 @@ void SceneNode::renderInMenu()
 		changed |= ImGui::Combo("Texture", (int*)&texture_selected, "BALL\0BOX\0BENCH\0HELMET\0LANTERN\0");
 		if (changed)
 		{
-<<<<<<< HEAD
 			//Selecting the geometry which textures will be applied
 			std::string geometry;
-=======
->>>>>>> parent of eb2b6dd (final toquesitos)
 			switch (texture_selected)
 			{
-			case 0: material->texture = Texture::Get("data/models/ball/albedo.png"); break;
-			case 1: material->texture = Texture::Get("data/models/basic/albedo.png"); break;
-			case 2: material->texture = Texture::Get("data/models/bench/albedo.png"); break;
-			case 3: material->texture = Texture::Get("data/models/helmet/albedo.png"); break;
-			case 4: material->texture = Texture::Get("data/models/lantern/albedo.png"); break;
+			case 0: geometry = "ball"; break;
+			case 1: geometry = "basic"; break;
+			case 2: geometry = "bench"; break;
+			case 3: geometry = "helmet"; break;
+			case 4: geometry = "lantern"; break;
 			}
-<<<<<<< HEAD
 			material->setTexture(geometry, mesh_selected); //Setting the textures
-=======
->>>>>>> parent of eb2b6dd (final toquesitos)
 		}
 
 		ImGui::TreePop();
@@ -209,18 +203,11 @@ Light::Light()
 
 void Light::renderInMenu()
 {
-	//Light properties
-	ImGui::ColorEdit3("Diffuse Color", (float*)&diffuse); // Edit 3 floats representing a color
-	ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
-	ImGui::DragFloat("Intenity", (float*)&intensity, 0.1f, 0.0f, 100.f);
-	ImGui::ColorEdit3("Color", (float*)&color); // Edit 3 floats representing a color
-
 	//Position
 	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
 	ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
 	ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
 	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
-<<<<<<< HEAD
 
 	//PBR parameters
 	if (ImGui::TreeNode("PBR")) {
@@ -235,8 +222,6 @@ void Light::renderInMenu()
 		ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
 		ImGui::TreePop();
 	}
-=======
->>>>>>> parent of eb2b6dd (final toquesitos)
 }
 
 Skybox::Skybox()

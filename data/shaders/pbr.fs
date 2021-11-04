@@ -31,7 +31,8 @@ uniform float u_first_pass;
 uniform bool u_metallic_roughness;
 uniform float u_metallic_factor;
 uniform float u_roughness_factor;
-uniform float u_normal_factor;
+uniform float u_subsurface_factor;
+uniform float u_diffuse_type;
 
 uniform samplerCube u_texture_prem_0;
 uniform samplerCube u_texture_prem_1;
@@ -182,13 +183,13 @@ void getMaterialProperties(inout PBRMat material, vec3 V)
 	material.base_color = gamma_to_linear(material.base_color);
 
 	//Define emission
-	material.emission = texture2D(u_emissive_texture, v_uv);
+	material.emission = texture2D(u_emissive_texture, v_uv).xyz;
 	material.emission = gamma_to_linear(material.emission);
 	
 	//Define normals
 	vec3 normal = normalize(v_normal);
 	material.N = texture2D(u_normal_texture, v_uv).xyz;
-	material.N = mix(normal, perturbNormal(normal, -V, v_uv, material.N), u_normal_factor); //Mix to enchance normals
+	material.N = perturbNormal(normal, -V, v_uv, material.N); //Mix to enchance normals
 
 	//If metallic and roughness are in the same texture...
 	if (u_metallic_roughness)
@@ -207,14 +208,8 @@ void getMaterialProperties(inout PBRMat material, vec3 V)
 	material.opacity = texture2D(u_opacity_texture, v_uv).x;
 
 	//Define the material diffuse color and F0
-<<<<<<< HEAD
 	material.F_0 = mix( vec3(0.04), material.base_color.xyz, material.metallic );
 	material.diffuse_color = mix( material.base_color.xyz, vec3(0.0), material.metallic ); 
-=======
-	vec3 F0 = vec3(0.04); //common material
-	material.F_0 = mix( F0, material.base_color.xyz, material.metallic );
-	material.diffuse_color = (1.0 - material.metallic) * material.base_color.xyz; 
->>>>>>> parent of eb2b6dd (final toquesitos)
 }
 
 vec3 computeIndirectLight(PBRMat material, vec3 V, float NdotV)
@@ -266,14 +261,53 @@ vec3 computeDirectLight(PBRMat material, vec3 V, float NdotV)
 			float D = compute_D(material.roughness, NdotH);
 			float G = compute_G(material.roughness, NdotL, NdotV); 
 	
-			//Diffuse component
-			vec3 f_diff = material.diffuse_color * RECIPROCAL_PI * NdotL;
-	
+			vec3 f_diff;
+			//Diffuse component (BURLEY)
+			if (u_diffuse_type == 0)
+			{
+				float fSS90 = material.roughness * LdotH * LdotH;
+				float lightScatter = 1.0 + (fSS90 - 1.0) * pow(1.0 - NdotL, 5.0);
+				float viewScatter  = 1.0 + (fSS90 - 1.0) * pow(1.0 - NdotV, 5.0);
+				float scatter =  lightScatter * viewScatter;
+				float f = NdotL * NdotV;
+				
+				float fss = abs((1.0 / (f + 1e-6) - 0.5) * scatter + 0.5);
+				
+				float fd90 = 0.5 + 2 *  material.roughness * LdotH * LdotH;
+				float lightScatter_d = 1.0 + (fd90 - 1.0) * pow(1.0 - NdotL, 5.0);
+				float viewScatter_d  = 1.0 + (fd90 - 1.0) * pow(1.0 - NdotV, 5.0);
+				float fd =  lightScatter_d * viewScatter_d;
+				
+				f_diff = material.diffuse_color * RECIPROCAL_PI * (fss * 1.25 * u_subsurface_factor + (1 - u_subsurface_factor) * fd) * NdotV * NdotL;
+			}
+
+			//Diffuse component (HAMMON)
+			if (u_diffuse_type == 1)
+			{
+				float f_multi = 0.3641 * material.roughness * material.roughness;
+				float k_facing = 0.5 + clamp(dot(L,V),0.0, 1.0);
+				float f_rough = k_facing * (0.9 - 0.4 * k_facing) * ((0.5 + NdotH) / (NdotH + 1e-6));
+				float lightScatter = 1.0 - pow(1.0 - NdotL, 5.0);
+				float viewScatter  = 1.0 - pow(1.0 - NdotV, 5.0);
+				float scatter =  lightScatter * viewScatter;
+				float f_smooth = 21/20 * (1 - material.F_0) * scatter;
+				float fss = (1.0 - material.roughness * material.roughness) * f_smooth + material.roughness * material.roughness * f_rough + material.diffuse_color * f_multi;
+				f_diff = material.diffuse_color * RECIPROCAL_PI * fss * NdotL * NdotV;
+			}
+
+			if (u_diffuse_type == 2)
+			{
+				f_diff = material.diffuse_color * RECIPROCAL_PI;
+			}
+
 			//Specular component
 			vec3 f_specular = (F * G * D) / (4.0 * NdotL * NdotV + 1e-6);	
-	
-			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i]; 
+			
+			//Result
+			direct_light += (f_diff + f_specular) * gamma_to_linear(u_light_color[i]) * u_light_intensity[i] * NdotL; 
 		}
+		else
+			break;
 	}
 
 	return direct_light;
@@ -285,7 +319,7 @@ vec3 getPixelColor(PBRMat material, vec3 V, float NdotV)
 	vec3 color = computeIndirectLight(material, V, NdotV);
 
 	//Compute direct light
-	color += computeDirectLight(material, V, NdotV);
+	color = computeDirectLight(material, V, NdotV);
 
 	//Add emissions
 	color += material.emission;

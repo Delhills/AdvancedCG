@@ -57,13 +57,9 @@ void StandardMaterial::renderInMenu()
 
 void StandardMaterial::setTexture(std::string geometry, int mesh)
 {
-<<<<<<< HEAD
 	//In this case the mesh is not used because in this function at the moment is not necessary, 
 	//but since we are overwriting an abstact method we needed, having a more agile code thanks to this functions
 	texture = Texture::Get(("data/models/" + geometry + "/albedo.png").c_str()); //Set albedo texture
-=======
-	texture = Texture::Get(("data/models/" + geometry + "/albedo.png").c_str());
->>>>>>> parent of eb2b6dd (final toquesitos)
 }
 
 PhongMaterial::PhongMaterial()
@@ -244,9 +240,10 @@ PBRMaterial::PBRMaterial()
 	opacity_texture = Texture::getWhiteTexture();
 
 	metallic_roughness = true;
-	normal = 1.0;
 	roughness = 1.0;
 	metalness = 1.0;
+	subsurface = 1.0;
+	diffuse_type = 0;
 }
 
 PBRMaterial::~PBRMaterial()
@@ -293,9 +290,11 @@ void PBRMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_texture_prem_3", sky->texture_prem_3, 12);
 	shader->setUniform("u_texture_prem_4", sky->texture_prem_4, 13);
 
+	//Set factors
 	shader->setUniform("u_metallic_factor", metalness);
 	shader->setUniform("u_roughness_factor", roughness);
-	shader->setUniform("u_normal_factor", normal);
+	shader->setUniform("u_subsurface_factor", subsurface);
+	shader->setUniform("u_diffuse_type", diffuse_type);
 }
 
 void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
@@ -303,9 +302,11 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 	if (mesh && shader)
 	{
 		//Setting flags
-		glDepthFunc(GL_LEQUAL); 
+		glDepthFunc(GL_LESS); 
+
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
+
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 		glFrontFace(GL_CW);
@@ -333,6 +334,7 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 			light_intensity[i] = light->intensity;
 		}
 
+		//Setting the uniforms
 		shader->setUniform3Array("u_light_position", (float*)&light_position, MAX_LIGHTS);
 		shader->setUniform3Array("u_light_color", (float*)&light_color, MAX_LIGHTS);
 		shader->setUniform1Array("u_light_intensity", (float*)&light_intensity, MAX_LIGHTS);
@@ -343,43 +345,48 @@ void PBRMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
 
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
-	glDepthFunc(GL_LESS);
-
 }
 
 void PBRMaterial::renderInMenu()
 {
-	ImGui::ColorEdit4("Color", (float*)&color); // Edit 3 floats representing a color
-	ImGui::DragFloat("Metalness", (float*)&metalness, 0.01f, 0.0f, 1.0f);
-	ImGui::DragFloat("Roughness", (float*)&roughness, 0.01f, 0.0f, 1.0f);
-	ImGui::DragFloat("Normal Scale", (float*)&normal, 0.01f, -1.0f, 2.0f);
+	ImGui::ColorEdit4("Color", (float*)&color); // Edit 4 floats representing a color and alpha channel
+	ImGui::SliderFloat("Metalness", (float*)&metalness, 0.0f, 1.0f);
+	ImGui::SliderFloat("Roughness", (float*)&roughness, 0.0f, 1.0f);
+	ImGui::SliderFloat("Subsurface Scattering", (float*)&subsurface, 0.0f, 1.0f);
+	ImGui::Combo("Diffuse Mode", (int*)&diffuse_type, "BURLEY\0HAMMON\0LAMBERT");
 }
 
 void PBRMaterial::setTexture(std::string geometry, int mesh)
 {
+	//Setting the albedo texture
 	StandardMaterial::setTexture(geometry, mesh);
 
+	//Setting normalmap
 	normal_texture = Texture::Get(("data/models/" + geometry + "/normal.png").c_str());
 
+	//Setting ambient occlusion
 	ao_texture = Texture::Get(("data/models/" + geometry + "/ao.png").c_str());
 	if (ao_texture == NULL)
 		ao_texture = Texture::getWhiteTexture();
 
+	//Setting emissive map
 	emissive_texture = Texture::Get(("data/models/" + geometry + "/emissive.png").c_str());
 	if (emissive_texture == NULL)
 		emissive_texture = Texture::getBlackTexture();
 
+	//Setting opacity map
 	opacity_texture = Texture::Get(("data/models/" + geometry + "/opacity.png").c_str());
 	if (opacity_texture == NULL)
 		opacity_texture = Texture::getWhiteTexture();
 
-	if (mesh == 2)
+	//Setting metalness and roughness
+	if (mesh == 2) //If the mesh is the helmet...
 	{
 		metallic_roughness = true;
 		metallic_texture = NULL;
 		roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());;
 	}
-	else
+	else //If not...
 	{
 		metallic_roughness = false;
 		metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());

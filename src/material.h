@@ -97,9 +97,12 @@ class PBRMaterial : public StandardMaterial
 {
 public:
 
-	Texture* normal_texture;
+	//Maps
 	Texture* metallic_texture;
 	Texture* roughness_texture;
+
+	//Extra maps
+	Texture* normal_texture;
 	Texture* ao_texture;
 	Texture* emissive_texture;
 	Texture* opacity_texture;
@@ -110,7 +113,8 @@ public:
 	//Material factors
 	float roughness;
 	float metalness;
-	float normal;
+	float subsurface;
+	int diffuse_type;
 
 	PBRMaterial();
 	~PBRMaterial();
