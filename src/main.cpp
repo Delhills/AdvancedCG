@@ -132,7 +132,8 @@ void renderGUI(SDL_Window* window, Application * game)
 			}
 
 			//Configure skybox
-			game->sky->renderInMenu();
+			/*if (game->sky)
+				game->sky->renderInMenu();
 
 			for (auto& node : game->light_list)
 			{
@@ -144,7 +145,7 @@ void renderGUI(SDL_Window* window, Application * game)
 				}
 				++count;
 				ss.str("");
-			}
+			}*/
 
 			for (auto& node : game->node_list)
 			{

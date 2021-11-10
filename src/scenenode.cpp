@@ -2,10 +2,11 @@
 #include "application.h"
 #include "texture.h"
 #include "utils.h"
+#include "volume.h"
 
 unsigned int SceneNode::lastNameId = 0;
 unsigned int Light::lastLightId = 0;
-unsigned int environment_selected = 0;
+unsigned int volume_selected = 5;
 
 SceneNode::SceneNode()
 {
@@ -260,29 +261,78 @@ void Skybox::render(Camera* camera)
 	material->render(mesh, model, camera);
 }
 
-void Skybox::renderInMenu()
+//void Skybox::renderInMenu()
+//{
+//	bool changed = false;
+//	changed |= ImGui::Combo("Environment", (int*)&volume, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
+//	if (changed)
+//	{
+//		//Selecting the HDRe
+//		HDRE* hdre;
+//		switch (environment_selected)
+//		{
+//		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
+//		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
+//		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
+//		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
+//		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
+//		}
+//
+//		//Setting the different level textures
+//		material->texture->cubemapFromHDRE(hdre, 0);
+//		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
+//		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
+//		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
+//		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
+//		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
+//	}
+//}
+
+VolumeNode::VolumeNode()
+{
+	material = new VolumeMaterial();
+
+	mesh = new Mesh();
+	mesh->createCube();
+}
+
+void VolumeNode::renderInMenu()
 {
 	bool changed = false;
-	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
+	changed |= ImGui::Combo("Volume", (int*)&volume_selected, "BONSAI\0ABDOMEN\0DAISY\0FOOT\0ORANGE\0TEAPOT\0");
 	if (changed)
 	{
 		//Selecting the HDRe
-		HDRE* hdre;
-		switch (environment_selected)
+		
+		Volume* volume = new Volume();
+
+		switch (volume_selected)
 		{
-		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
-		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
-		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
-		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
-		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
+		case 0: volume->loadPNG("data/volumes/bonsai_16_16.png"); break;
+		case 1: volume->loadPVM("data/volumes/CT-Abdomen.pvm"); break;
+		case 2: volume->loadPVM("data/volumes/Daisy.pvm.png"); break;
+		case 3: volume->loadPNG("data/volumes/foot_16_16.png"); break;
+		case 4: volume->loadPVM("data/volumes/Orange.pvm"); break;
+		case 5: volume->loadPNG("data/volumes/teapot_16_16.png"); break;
 		}
 
-		//Setting the different level textures
-		material->texture->cubemapFromHDRE(hdre, 0);
-		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
-		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
-		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
-		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
-		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
+		//material->texture->~Texture();
+		//material->texture = new Texture();
+		material->texture->create3DFromVolume(volume);
 	}
+
+	//Model edit
+	if (ImGui::TreeNode("Model"))
+	{
+		float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+		ImGuizmo::DecomposeMatrixToComponents(model.m, matrixTranslation, matrixRotation, matrixScale);
+		ImGui::DragFloat3("Position", matrixTranslation, 0.1f);
+		ImGui::DragFloat3("Rotation", matrixRotation, 0.1f);
+		ImGui::DragFloat3("Scale", matrixScale, 0.1f);
+		ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
+
+		ImGui::TreePop();
+	}
+
+	material->renderInMenu();
 }

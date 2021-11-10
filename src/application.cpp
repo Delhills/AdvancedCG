@@ -44,7 +44,7 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
-	std::string geometry[5] = {"ball", "basic", "helmet", "bench", "lantern"};
+	/*std::string geometry[5] = {"ball", "basic", "helmet", "bench", "lantern"};
 	BRDFlut = Texture::Get("data/brdfLUT.png", false, GL_CLAMP_TO_EDGE);
 	for (int i = 0; i < 5; ++i)
 	{
@@ -55,11 +55,11 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		Texture::Get(("data/models/" + geometry[i] + "/opacity.png").c_str());
 		Texture::Get(("data/models/" + geometry[i] + "/metalness.png").c_str());
 		Texture::Get(("data/models/" + geometry[i] + "/roughness.png").c_str());
-	}
+	}*/
 
 	//Setting the default scene
 	{
-		ambient_light = Vector3(0.5, 0.5, 0.5);
+		/*ambient_light = Vector3(0.5, 0.5, 0.5);
 
 		sky = new Skybox();
 
@@ -67,6 +67,9 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		light_list.push_back(light);
 
 		SceneNode* node = new SceneNode();
+		node_list.push_back(node);*/
+
+		VolumeNode* node = new VolumeNode();
 		node_list.push_back(node);
 	}
 	
@@ -78,7 +81,7 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 void Application::render(void)
 {
 	//set the clear color (the background color)
-	glClearColor(.1,.1,.1, 1.0);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
 
 	// Clear the window and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -87,8 +90,8 @@ void Application::render(void)
 	camera->enable();
 
 	//render skybox
-	glDisable(GL_DEPTH_TEST);
-	sky->render(camera);
+	//glDisable(GL_DEPTH_TEST);
+	//sky->render(camera);
 
 	//set flags
 	glEnable(GL_DEPTH_TEST);
@@ -96,8 +99,8 @@ void Application::render(void)
 
 	//We create another list for the sorting because if we not do it the nodes will change their positions in ImGUI
 	std::vector<SceneNode*>list_node = node_list;
-	if (camera)
-		std::sort(list_node.begin(), list_node.end(), compareNodes);
+	/*if (camera)
+		std::sort(list_node.begin(), list_node.end(), compareNodes);*/
 
 	for (size_t i = 0; i < list_node.size(); i++) {
 		list_node[i]->render(camera);
@@ -105,6 +108,8 @@ void Application::render(void)
 		if(render_wireframe)
 			list_node[i]->renderWireframe(camera);
 	}
+
+
 
 	//Draw the floor grid
 	if(render_debug)

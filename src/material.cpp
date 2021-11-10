@@ -2,6 +2,7 @@
 #include "texture.h"
 #include "application.h"
 #include "extra/hdre.h"
+#include "volume.h"
 
 const int MAX_LIGHTS = 100;
 
@@ -392,4 +393,40 @@ void PBRMaterial::setTexture(std::string geometry, int mesh)
 		metallic_texture = Texture::Get(("data/models/" + geometry + "/metalness.png").c_str());
 		roughness_texture = Texture::Get(("data/models/" + geometry + "/roughness.png").c_str());
 	}
+}
+
+VolumeMaterial::VolumeMaterial()
+{
+	Volume* volume = new Volume();
+	volume->loadPNG("data/volumes/teapot_16_16.png");
+	texture = new Texture();
+	texture->create3DFromVolume(volume);
+
+	//Set Volume shader
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/volume.fs");
+
+	step = 0.01;
+	intensity = 1.0;
+}
+
+VolumeMaterial::~VolumeMaterial()
+{
+}
+
+void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
+{
+	//upload node uniforms
+	StandardMaterial::setUniforms(camera, model);
+
+	shader->setUniform("u_inv_model", model.inverse());
+	shader->setUniform("u_inv_viewprojection", camera->viewprojection_matrix.inverse());
+	shader->setUniform("u_intensity", intensity);
+	shader->setUniform("u_step_length", step);
+}
+
+void VolumeMaterial::renderInMenu()
+{
+	ImGui::ColorEdit4("Color", (float*)&color); // Edit 4 floats representing a color and alpha channel
+	ImGui::SliderFloat("Step Length", (float*)&step, 0.001f, 0.1f);
+	ImGui::SliderFloat("Intensity", (float*)&intensity, 0.0f, 100.0f);
 }

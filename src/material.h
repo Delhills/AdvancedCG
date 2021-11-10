@@ -127,4 +127,16 @@ public:
 	void setTexture(std::string geometry, int mesh);
 };
 
+class VolumeMaterial : public StandardMaterial {
+public:
+
+	float intensity;
+	float step;
+
+	VolumeMaterial();
+	~VolumeMaterial();
+
+	void setUniforms(Camera* camera, Matrix44 model);
+	void renderInMenu();
+};
 #endif

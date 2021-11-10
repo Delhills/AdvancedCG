@@ -37,6 +37,7 @@ public:
 	//Carefull using too large files as it may crash the app
 	bool loadVL(const char* filename);
 	bool loadPVM(const char* filename);
+	bool loadPNG(const char* filename, unsigned int rows = 16, unsigned int columns = 16);
 
 	//Slow methods
 	void fillSphere();
