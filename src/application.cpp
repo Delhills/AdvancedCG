@@ -71,6 +71,9 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 
 		VolumeNode* node = new VolumeNode();
 		node_list.push_back(node);
+
+		Light* light = new Light();
+		light_list.push_back(light);
 	}
 	
 	//hide the cursor

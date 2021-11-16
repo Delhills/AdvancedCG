@@ -310,7 +310,7 @@ void VolumeNode::renderInMenu()
 		{
 		case 0: volume->loadPNG("data/volumes/bonsai_16_16.png"); break;
 		case 1: volume->loadPVM("data/volumes/CT-Abdomen.pvm"); break;
-		case 2: volume->loadPVM("data/volumes/Daisy.pvm.png"); break;
+		case 2: volume->loadPVM("data/volumes/Daisy.pvm"); break;
 		case 3: volume->loadPNG("data/volumes/foot_16_16.png"); break;
 		case 4: volume->loadPVM("data/volumes/Orange.pvm"); break;
 		case 5: volume->loadPNG("data/volumes/teapot_16_16.png"); break;

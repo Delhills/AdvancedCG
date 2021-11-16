@@ -132,6 +132,13 @@ public:
 
 	float intensity;
 	float step;
+	Texture* noise;
+	Vector4 clipping_plane;
+
+	Vector3 ambient;
+	Vector3 diffuse;
+	Vector3 specular;
+	float shininess;
 
 	VolumeMaterial();
 	~VolumeMaterial();

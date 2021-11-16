@@ -405,8 +405,19 @@ VolumeMaterial::VolumeMaterial()
 	//Set Volume shader
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/volume.fs");
 
+	//Set noise texture
+	noise = Texture::Get("data/blueNoise.png");
+
 	step = 0.01;
 	intensity = 1.0;
+	clipping_plane = Vector4(0.5, 0.5, 0.5, 0.0);
+
+	//Setting the default parameters
+	color = vec4(1.f, 1.f, 1.f, 1.f);
+	ambient = vec3(1.f, 1.f, 1.f);
+	diffuse = vec3(1.f, 1.f, 1.f);
+	specular = vec3(1.f, 1.f, 1.f);
+	shininess = 256.0f;
 }
 
 VolumeMaterial::~VolumeMaterial()
@@ -422,11 +433,32 @@ void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_inv_viewprojection", camera->viewprojection_matrix.inverse());
 	shader->setUniform("u_intensity", intensity);
 	shader->setUniform("u_step_length", step);
+	shader->setUniform("u_clipping_plane", clipping_plane);
+	shader->setUniform("u_noise_texture", noise, 1);
+
+	//Pass light parameters
+	std::vector< Light* > lights = Application::instance->light_list;
+	shader->setUniform("u_light_ambient", Application::instance->ambient_light); //Pass ambient light for the first pass
+	shader->setUniform("u_light_position", lights[0]->model.getTranslation());
+	shader->setUniform("u_light_diffuse", lights[0]->diffuse);
+	shader->setUniform("u_light_specular", lights[0]->specular);
+
+	//Upload material related uniforms
+	shader->setUniform("u_material_ambient", ambient);
+	shader->setUniform("u_material_diffuse", diffuse);
+	shader->setUniform("u_material_specular", specular);
+	shader->setUniform("u_material_shininess", shininess);
 }
 
 void VolumeMaterial::renderInMenu()
 {
 	ImGui::ColorEdit4("Color", (float*)&color); // Edit 4 floats representing a color and alpha channel
+	ImGui::DragFloat4("Clipping Plane", (float*)&clipping_plane, 0.01f); // Edit 4 floats representing a color and alpha channel
 	ImGui::SliderFloat("Step Length", (float*)&step, 0.001f, 0.1f);
 	ImGui::SliderFloat("Intensity", (float*)&intensity, 0.0f, 100.0f);
+
+	ImGui::ColorEdit3("Ambient", (float*)&ambient); // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Diffuse", (float*)&diffuse); // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Specular", (float*)&specular); // Edit 3 floats representing a color
+	ImGui::DragFloat("Shininess", (float*)&shininess, 1.0f, 1.0f, 256.f);
 }
