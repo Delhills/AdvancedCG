@@ -408,16 +408,12 @@ VolumeMaterial::VolumeMaterial()
 	//Set noise texture
 	noise = Texture::Get("data/blueNoise.png");
 
+	transfer_function = Texture::Get("data/volumes/teapot.png", true, GL_CLAMP_TO_EDGE);
+
 	step = 0.01;
 	intensity = 1.0;
-	clipping_plane = Vector4(0.5, 0.5, 0.5, 0.0);
-
-	//Setting the default parameters
-	color = vec4(1.f, 1.f, 1.f, 1.f);
-	ambient = vec3(1.f, 1.f, 1.f);
-	diffuse = vec3(1.f, 1.f, 1.f);
-	specular = vec3(1.f, 1.f, 1.f);
-	shininess = 256.0f;
+	clipping_plane = Vector4(0.5, 0.5, 0.5, -1.5);
+	threshold = 0.1;
 }
 
 VolumeMaterial::~VolumeMaterial()
@@ -443,6 +439,50 @@ void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_light_diffuse", lights[0]->diffuse);
 	shader->setUniform("u_light_specular", lights[0]->specular);
 
+	shader->setUniform("u_threshold", threshold);
+	shader->setUniform("u_texture_lut", transfer_function, 5);
+
+	shader->setUniform("u_jittering", check_jittering);
+	shader->setUniform("u_transfer_function", check_transfer_function);
+	shader->setUniform("u_clipping_plane_check", check_clipping_plane);
+}
+
+void VolumeMaterial::renderInMenu()
+{
+	ImGui::Checkbox("Jittering", &check_jittering);
+	ImGui::Checkbox("Transfer Function", &check_transfer_function);
+	ImGui::Checkbox("Clipping Plane", &check_clipping_plane);
+	if (check_clipping_plane)
+		ImGui::DragFloat4("Clipping Plane", (float*)&clipping_plane, 0.01f); // Edit 4 floats representing a color and alpha channel
+
+	ImGui::ColorEdit4("Color", (float*)&color); // Edit 4 floats representing a color and alpha channel
+	ImGui::SliderFloat("Step Length", (float*)&step, 0.001f, 0.1f);
+	ImGui::SliderFloat("Intensity", (float*)&intensity, 0.0f, 100.0f);
+	ImGui::SliderFloat("Threshold", (float*)&threshold, 0.001f, 1.0f);
+}
+
+VolumeMaterialPhong::VolumeMaterialPhong()
+{
+	//Setting the default parameters
+	color = vec4(1.f, 1.f, 1.f, 1.f);
+	ambient = vec3(1.f, 1.f, 1.f);
+	diffuse = vec3(1.f, 1.f, 1.f);
+	specular = vec3(1.f, 1.f, 1.f);
+	shininess = 256.0f;
+
+	//Set Volume shader
+	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/volume_isosurfaces.fs");
+}
+
+VolumeMaterialPhong::~VolumeMaterialPhong()
+{
+}
+
+void VolumeMaterialPhong::setUniforms(Camera* camera, Matrix44 model)
+{
+	//upload node uniforms
+	VolumeMaterial::setUniforms(camera, model);
+
 	//Upload material related uniforms
 	shader->setUniform("u_material_ambient", ambient);
 	shader->setUniform("u_material_diffuse", diffuse);
@@ -450,15 +490,11 @@ void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_material_shininess", shininess);
 }
 
-void VolumeMaterial::renderInMenu()
+void VolumeMaterialPhong::renderInMenu()
 {
-	ImGui::ColorEdit4("Color", (float*)&color); // Edit 4 floats representing a color and alpha channel
-	ImGui::DragFloat4("Clipping Plane", (float*)&clipping_plane, 0.01f); // Edit 4 floats representing a color and alpha channel
-	ImGui::SliderFloat("Step Length", (float*)&step, 0.001f, 0.1f);
-	ImGui::SliderFloat("Intensity", (float*)&intensity, 0.0f, 100.0f);
-
 	ImGui::ColorEdit3("Ambient", (float*)&ambient); // Edit 3 floats representing a color
 	ImGui::ColorEdit3("Diffuse", (float*)&diffuse); // Edit 3 floats representing a color
 	ImGui::ColorEdit3("Specular", (float*)&specular); // Edit 3 floats representing a color
 	ImGui::DragFloat("Shininess", (float*)&shininess, 1.0f, 1.0f, 256.f);
+	VolumeMaterial::renderInMenu();
 }

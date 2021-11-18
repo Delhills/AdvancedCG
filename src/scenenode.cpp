@@ -6,7 +6,7 @@
 
 unsigned int SceneNode::lastNameId = 0;
 unsigned int Light::lastLightId = 0;
-unsigned int volume_selected = 5;
+
 
 SceneNode::SceneNode()
 {
@@ -302,22 +302,36 @@ void VolumeNode::renderInMenu()
 	changed |= ImGui::Combo("Volume", (int*)&volume_selected, "BONSAI\0ABDOMEN\0DAISY\0FOOT\0ORANGE\0TEAPOT\0");
 	if (changed)
 	{
-		//Selecting the HDRe
-		
 		Volume* volume = new Volume();
 
 		switch (volume_selected)
 		{
-		case 0: volume->loadPNG("data/volumes/bonsai_16_16.png"); break;
-		case 1: volume->loadPVM("data/volumes/CT-Abdomen.pvm"); break;
-		case 2: volume->loadPVM("data/volumes/Daisy.pvm"); break;
-		case 3: volume->loadPNG("data/volumes/foot_16_16.png"); break;
-		case 4: volume->loadPVM("data/volumes/Orange.pvm"); break;
-		case 5: volume->loadPNG("data/volumes/teapot_16_16.png"); break;
+		case 0: volume->loadPNG("data/volumes/bonsai_16_16.png"); 
+			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/bonsai.png", true, GL_CLAMP_TO_EDGE); 
+			((VolumeMaterial*)material)->threshold = 0.13;
+			break;
+		case 1: volume->loadPVM("data/volumes/CT-Abdomen.pvm");
+			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/abdomen.png", true, GL_CLAMP_TO_EDGE); 
+			((VolumeMaterial*)material)->threshold = 0.075;
+			break;
+		case 2: volume->loadPVM("data/volumes/Daisy.pvm"); 
+			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/daisy.png", true, GL_CLAMP_TO_EDGE); 
+			((VolumeMaterial*)material)->threshold = 0.0;
+			break;
+		case 3: volume->loadPNG("data/volumes/foot_16_16.png"); 
+			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/foot.png", true, GL_CLAMP_TO_EDGE); 
+			((VolumeMaterial*)material)->threshold = 0.02;
+			break;
+		case 4: volume->loadPVM("data/volumes/Orange.pvm"); 
+			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/orange.png", true, GL_CLAMP_TO_EDGE); 
+			((VolumeMaterial*)material)->threshold = 0.02;
+			break;
+		case 5: volume->loadPNG("data/volumes/teapot_16_16.png"); 
+			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/teapot.png", true, GL_CLAMP_TO_EDGE);
+			((VolumeMaterial*)material)->threshold = 0.1;
+			break;
 		}
 
-		//material->texture->~Texture();
-		//material->texture = new Texture();
 		material->texture->create3DFromVolume(volume);
 	}
 
@@ -332,6 +346,23 @@ void VolumeNode::renderInMenu()
 		ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, model.m);
 
 		ImGui::TreePop();
+	}
+
+	changed |= ImGui::Checkbox("Isosurface", &isourface);
+	if (changed)
+	{
+		Texture* tf = ((VolumeMaterial*)material)->transfer_function;
+		Texture* vol = ((VolumeMaterial*)material)->texture;
+		float thres = ((VolumeMaterial*)material)->threshold;
+
+		if (isourface)
+			material = new VolumeMaterialPhong();
+		else
+			material = new VolumeMaterial();
+		
+		((VolumeMaterial*)material)->transfer_function = tf;
+		((VolumeMaterial*)material)->texture = vol;
+		((VolumeMaterial*)material)->threshold = thres;
 	}
 
 	material->renderInMenu();

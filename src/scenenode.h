@@ -67,6 +67,9 @@ class VolumeNode : public SceneNode
 {
 public:
 
+	unsigned int volume_selected = 5;
+	bool isourface = false;
+
 	VolumeNode();
 
 	void renderInMenu();

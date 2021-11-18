@@ -112,8 +112,6 @@ void Application::render(void)
 			list_node[i]->renderWireframe(camera);
 	}
 
-
-
 	//Draw the floor grid
 	if(render_debug)
 		drawGrid();

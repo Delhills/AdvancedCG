@@ -132,16 +132,32 @@ public:
 
 	float intensity;
 	float step;
+	Texture* transfer_function;
 	Texture* noise;
 	Vector4 clipping_plane;
+	float threshold;
+
+	bool check_jittering = false;
+	bool check_transfer_function = false;
+	bool check_clipping_plane = false;
+
+	VolumeMaterial();
+	~VolumeMaterial();
+
+	void setUniforms(Camera* camera, Matrix44 model);
+	void renderInMenu();
+};
+
+class VolumeMaterialPhong : public VolumeMaterial {
+public:
 
 	Vector3 ambient;
 	Vector3 diffuse;
 	Vector3 specular;
 	float shininess;
 
-	VolumeMaterial();
-	~VolumeMaterial();
+	VolumeMaterialPhong();
+	~VolumeMaterialPhong();
 
 	void setUniforms(Camera* camera, Matrix44 model);
 	void renderInMenu();
