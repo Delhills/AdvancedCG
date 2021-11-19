@@ -441,19 +441,6 @@ VolumeMaterial::~VolumeMaterial()
 {
 }
 
-void VolumeMaterial::render(Mesh* mesh, Matrix44 model, Camera* camera)
-{
-	if (check_transfer_function)
-	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-	}
-	else
-		glDisable(GL_BLEND);
-
-	StandardMaterial::render(mesh, model, camera);
-}
-
 void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 {
 	//upload node uniforms
@@ -510,19 +497,6 @@ VolumeMaterialPhong::VolumeMaterialPhong()
 
 VolumeMaterialPhong::~VolumeMaterialPhong()
 {
-}
-
-void VolumeMaterialPhong::render(Mesh* mesh, Matrix44 model, Camera* camera)
-{
-	if (check_transfer_function)
-	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-	}
-	else 
-		glDisable(GL_BLEND);
-
-	StandardMaterial::render(mesh, model, camera);
 }
 
 void VolumeMaterialPhong::setUniforms(Camera* camera, Matrix44 model)

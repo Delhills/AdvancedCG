@@ -62,7 +62,8 @@ void main(){
 				sampleColor = vec4(d);
 
 			// 4. Composition
-			if (d > u_threshold && sampleColor.w > 0.0)
+			sampleColor.xyz *= sampleColor.w;
+			if (d > u_threshold)
 				finalColor += u_step_length * (1.0 - finalColor.w) * sampleColor;
 		}
 
@@ -75,5 +76,5 @@ void main(){
 	}
 
 	//7. Final color
-	gl_FragColor = vec4(finalColor.xyz * u_intensity * u_color.xyz, finalColor.w * u_color.w);
+	gl_FragColor = finalColor * u_intensity * u_color;
 }
