@@ -70,6 +70,18 @@ public:
 	unsigned int volume_selected = 5;
 	bool isourface = false;
 
+	int num_intervals;
+	
+	int int_1;
+	int int_2;
+	int int_3;
+	int int_4;
+	
+	Vector4 color1;
+	Vector4 color2;
+	Vector4 color3;
+	Vector4 color4;
+
 	VolumeNode();
 
 	void renderInMenu();

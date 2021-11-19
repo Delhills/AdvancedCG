@@ -69,7 +69,7 @@ Texture::Texture(unsigned int width, unsigned int height, unsigned int format, u
 Texture::Texture(Image* img)
 {
 	texture_id = 0;
-	create(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data);
+	create(img->width, img->height, img->bytes_per_pixel == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, true, img->data, 0U, GL_CLAMP_TO_EDGE);
 }
 
 Texture::~Texture()

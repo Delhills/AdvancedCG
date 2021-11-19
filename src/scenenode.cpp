@@ -294,6 +294,10 @@ VolumeNode::VolumeNode()
 
 	mesh = new Mesh();
 	mesh->createCube();
+
+	color1 = Vector4(0.0 / 255.0, 42.0 / 255.0, 5.0 / 255.0, 255.0 / 255.0);
+	color2 = Vector4(29.0 / 255.0, 19.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0);
+	color3 = Vector4(100.0 / 255.0, 44.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0);
 }
 
 void VolumeNode::renderInMenu()
@@ -307,32 +311,82 @@ void VolumeNode::renderInMenu()
 		switch (volume_selected)
 		{
 		case 0: volume->loadPNG("data/volumes/bonsai_16_16.png"); 
-			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/bonsai.png", true, GL_CLAMP_TO_EDGE); 
 			((VolumeMaterial*)material)->threshold = 0.13;
+			int_1 = 25;
+			int_2 = 55;
+			int_3 = 129;
+			num_intervals = 3;
+			color1 = Vector4(1 / 255.0, 107 / 255.0, 12 / 255.0, 255.0 / 255.0);
+			color2 = Vector4(74 / 255.0, 51 / 255.0, 0 / 255.0, 255.0 / 255.0);
+			color3 = Vector4(255 / 255.0, 114 / 255.0, 0 / 255.0, 255.0 / 255.0);
 			break;
 		case 1: volume->loadPVM("data/volumes/CT-Abdomen.pvm");
-			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/abdomen.png", true, GL_CLAMP_TO_EDGE); 
 			((VolumeMaterial*)material)->threshold = 0.075;
+			int_1 = 31;
+			int_2 = 48;
+			//int_3 = 51;
+			int_3 = 129;
+			num_intervals = 3;
+			color1 = Vector4(192 / 255.0, 152 / 255.0, 93 / 255.0, 255.0 / 255.0);
+			color2 = Vector4(164 / 255.0, 6 / 255.0, 6 / 255.0, 255.0 / 255.0);
+			//color3 = Vector4(106 / 255.0, 78 / 255.0, 25 / 255.0, 255.0 / 255.0);
+			color3 = Vector4(255 / 255.0, 255 / 255.0, 255 / 255.0, 255.0 / 255.0);
 			break;
 		case 2: volume->loadPVM("data/volumes/Daisy.pvm"); 
-			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/daisy.png", true, GL_CLAMP_TO_EDGE); 
 			((VolumeMaterial*)material)->threshold = 0.0;
+			int_1 = 129;
+			num_intervals = 1;
+			color1 = Vector4(95 / 255.0, 8 / 255.0, 187 / 255.0, 255.0 / 255.0);
 			break;
 		case 3: volume->loadPNG("data/volumes/foot_16_16.png"); 
-			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/foot.png", true, GL_CLAMP_TO_EDGE); 
 			((VolumeMaterial*)material)->threshold = 0.02;
+			int_1 = 42;
+			int_2 = 129;
+			num_intervals = 2;
+			color1 = Vector4(192 / 255.0, 152 / 255.0, 93 / 255.0, 255.0 / 255.0);
+			color2 = Vector4(255 / 255.0, 255 / 255.0, 255 / 255.0, 255.0 / 255.0);
 			break;
 		case 4: volume->loadPVM("data/volumes/Orange.pvm"); 
-			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/orange.png", true, GL_CLAMP_TO_EDGE); 
 			((VolumeMaterial*)material)->threshold = 0.02;
+			int_1 = 26;
+			int_2 = 129;
+			num_intervals = 2;
+			color1 = Vector4(255 / 255.0, 114 / 255.0, 0 / 255.0, 255.0 / 255.0);
+			color2 = Vector4(189 / 255.0, 158 / 255.0, 33 / 255.0, 255.0 / 255.0);
 			break;
 		case 5: volume->loadPNG("data/volumes/teapot_16_16.png"); 
-			((VolumeMaterial*)material)->transfer_function = Texture::Get("data/volumes/teapot.png", true, GL_CLAMP_TO_EDGE);
 			((VolumeMaterial*)material)->threshold = 0.1;
+			int_1 = 28;
+			int_2 = 62;
+			int_3 = 129;
+			num_intervals = 3;
+			color1 = Vector4(74 / 255.0, 49 / 255.0, 0 / 255.0, 255.0 / 255.0);
+			color2 = Vector4(11 / 255.0, 230 / 255.0, 35 / 255.0, 255.0 / 255.0);
+			color3 = Vector4(242 / 255.0, 11 / 255.0, 11 / 255.0, 255.0 / 255.0);
 			break;
 		}
 
 		material->texture->create3DFromVolume(volume);
+
+		Color color1_ub = Color(color1.x * 255.0, color1.y * 255.0, color1.z * 255.0, color1.w * 255.0);
+		Color color2_ub = Color(color2.x * 255.0, color2.y * 255.0, color2.z * 255.0, color2.w * 255.0);
+		Color color3_ub = Color(color3.x * 255.0, color3.y * 255.0, color3.z * 255.0, color3.w * 255.0);
+		Color color4_ub = Color(color4.x * 255.0, color4.y * 255.0, color4.z * 255.0, color4.w * 255.0);
+		Image* image = new Image(129, 1, 4);
+		for (int i = 0; i < 129; i++)
+		{
+			if (i < int_1)
+				image->setPixel(i, 0, color1_ub);
+			else if (i < int_2)
+				image->setPixel(i, 0, color2_ub);
+			else if (i < int_3)
+				image->setPixel(i, 0, color3_ub);
+			else if (i < int_4)
+				image->setPixel(i, 0, color4_ub);
+		}
+		Texture* text = new Texture(image);
+
+		((VolumeMaterial*)material)->transfer_function = text;// Texture::Get("data/volumes/bonsai.png", true, GL_CLAMP_TO_EDGE);
 	}
 
 	//Model edit
@@ -363,6 +417,53 @@ void VolumeNode::renderInMenu()
 		((VolumeMaterial*)material)->transfer_function = tf;
 		((VolumeMaterial*)material)->texture = vol;
 		((VolumeMaterial*)material)->threshold = thres;
+	}
+
+	if (num_intervals == 1)
+		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
+	if (num_intervals == 2)
+	{
+		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
+		ImGui::ColorEdit4("Color2", (float*)&color2); // Edit 4 floats representing a color and alpha channel
+	}
+	if (num_intervals == 3)
+	{
+		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
+		ImGui::ColorEdit4("Color2", (float*)&color2); // Edit 4 floats representing a color and alpha channel
+		ImGui::ColorEdit4("Color3", (float*)&color3); // Edit 4 floats representing a color and alpha channel
+	}
+	if (num_intervals == 4)
+	{
+		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
+		ImGui::ColorEdit4("Color2", (float*)&color2); // Edit 4 floats representing a color and alpha channel
+		ImGui::ColorEdit4("Color3", (float*)&color3); // Edit 4 floats representing a color and alpha channel
+		ImGui::ColorEdit4("Color4", (float*)&color4); // Edit 4 floats representing a color and alpha channel
+	}
+
+	if (ImGui::Button("Set Transfer Function", ImVec2(200.0, 20.0)))
+	{
+		Color color1_ub = Color(color1.x * 255.0, color1.y * 255.0, color1.z * 255.0, color1.w * 255.0);
+		Color color2_ub = Color(color2.x * 255.0, color2.y * 255.0, color2.z * 255.0, color2.w * 255.0);
+		Color color3_ub = Color(color3.x * 255.0, color3.y * 255.0, color3.z * 255.0, color3.w * 255.0);
+		Color color4_ub = Color(color4.x * 255.0, color4.y * 255.0, color4.z * 255.0, color4.w * 255.0);
+		Image* image = new Image(129, 1, 4);
+		for (int i = 0; i < 129; i++)
+		{
+			if (i < int_1)
+				image->setPixel(i, 0, color1_ub);
+			else if (i < int_2)
+				image->setPixel(i, 0, color2_ub);
+			else if (i < int_3)
+				image->setPixel(i, 0, color3_ub);
+			else if (i < int_4)
+				image->setPixel(i, 0, color4_ub);
+		}
+		image->flipY();
+		Texture* text = new Texture(image);
+
+		image->saveTGA("data/text.tga");
+
+		((VolumeMaterial*)material)->transfer_function = text;
 	}
 
 	material->renderInMenu();

@@ -57,12 +57,12 @@ void main(){
 			// 3. Classification
 			vec4 sampleColor;
 			if (u_transfer_function) 
-				{ sampleColor = texture2D(u_texture_lut, vec2(d, 0.5)); sampleColor.w = d; }
+				{ sampleColor = texture2D(u_texture_lut, vec2(d, 0.5)); }
 			else
 				sampleColor = vec4(d);
 
 			// 4. Composition
-			if (d > u_threshold)
+			if (d > u_threshold && sampleColor.w > 0.0)
 				finalColor += u_step_length * (1.0 - finalColor.w) * sampleColor;
 		}
 
@@ -75,5 +75,5 @@ void main(){
 	}
 
 	//7. Final color
-	gl_FragColor = finalColor * u_intensity * u_color;
+	gl_FragColor = vec4(finalColor.xyz * u_intensity * u_color.xyz, finalColor.w * u_color.w);
 }

@@ -144,6 +144,7 @@ public:
 	VolumeMaterial();
 	~VolumeMaterial();
 
+	void render(Mesh* mesh, Matrix44 model, Camera* camera);
 	void setUniforms(Camera* camera, Matrix44 model);
 	void renderInMenu();
 };
@@ -159,6 +160,7 @@ public:
 	VolumeMaterialPhong();
 	~VolumeMaterialPhong();
 
+	void render(Mesh* mesh, Matrix44 model, Camera* camera);
 	void setUniforms(Camera* camera, Matrix44 model);
 	void renderInMenu();
 };

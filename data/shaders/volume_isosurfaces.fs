@@ -96,7 +96,7 @@ void main(){
 				//PHONG
 				vec4 color;
 				if (u_transfer_function) 
-					{ color = texture2D(u_texture_lut, vec2(d, 0.5)); color.w = d; }
+					{ color = texture2D(u_texture_lut, vec2(d, 0.5)); }
 				else
 					color = u_color;
 
@@ -122,7 +122,7 @@ void main(){
 				vec3 illumination = (KaIa + diff + spec);
 
 				//assign the color to the output
-				finalColor = vec4(illumination, 1.0);
+				finalColor = vec4(illumination, color.w);
 			}
 		}
 		
