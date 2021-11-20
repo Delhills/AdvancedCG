@@ -57,12 +57,12 @@ void main(){
 			// 3. Classification
 			vec4 sampleColor;
 			if (u_transfer_function) 
-				{ sampleColor = texture2D(u_texture_lut, vec2(d, 0.5)); }
+				{ sampleColor = texture2D(u_texture_lut, vec2(d, 0.5)); sampleColor.xyz *= sampleColor.w; }
 			else
 				sampleColor = vec4(d);
 
 			// 4. Composition
-			sampleColor.xyz *= sampleColor.w;
+			//sampleColor.xyz *= sampleColor.w;
 			if (d > u_threshold)
 				finalColor += u_step_length * (1.0 - finalColor.w) * sampleColor;
 		}

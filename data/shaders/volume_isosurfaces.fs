@@ -120,7 +120,7 @@ void main(){
 			vec3 illumination = (KaIa + diff + spec);
 
 			//assign the color to the output
-			finalColor = vec4(illumination, 1.0);
+			finalColor = vec4(illumination, color.w);
 		}
 		
 		// 4. Next sample
