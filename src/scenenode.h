@@ -60,7 +60,7 @@ public:
 
 	Skybox();
 	void render(Camera* camera);
-	//void renderInMenu();
+	void renderInMenu();
 };
 
 class VolumeNode : public SceneNode

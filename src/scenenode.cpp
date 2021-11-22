@@ -6,7 +6,7 @@
 
 unsigned int SceneNode::lastNameId = 0;
 unsigned int Light::lastLightId = 0;
-
+unsigned int environment_selected = 0;
 
 SceneNode::SceneNode()
 {
@@ -261,32 +261,32 @@ void Skybox::render(Camera* camera)
 	material->render(mesh, model, camera);
 }
 
-//void Skybox::renderInMenu()
-//{
-//	bool changed = false;
-//	changed |= ImGui::Combo("Environment", (int*)&volume, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
-//	if (changed)
-//	{
-//		//Selecting the HDRe
-//		HDRE* hdre;
-//		switch (environment_selected)
-//		{
-//		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
-//		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
-//		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
-//		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
-//		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
-//		}
-//
-//		//Setting the different level textures
-//		material->texture->cubemapFromHDRE(hdre, 0);
-//		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
-//		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
-//		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
-//		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
-//		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
-//	}
-//}
+void Skybox::renderInMenu()
+{
+	bool changed = false;
+	changed |= ImGui::Combo("Environment", (int*)&environment_selected, "PANORAMA\0PISA\0SAN GIUSEPPE BRIDGE\0STUDIO\0TV STUDIO");
+	if (changed)
+	{
+		//Selecting the HDRe
+		HDRE* hdre;
+		switch (environment_selected)
+		{
+		case 0: hdre = HDRE::Get("data/environments/panorama.hdre"); break;
+		case 1: hdre = HDRE::Get("data/environments/pisa.hdre"); break;
+		case 2: hdre = HDRE::Get("data/environments/san_giuseppe_bridge.hdre"); break;
+		case 3: hdre = HDRE::Get("data/environments/studio.hdre"); break;
+		case 4: hdre = HDRE::Get("data/environments/tv_studio.hdre"); break;
+		}
+
+		//Setting the different level textures
+		material->texture->cubemapFromHDRE(hdre, 0);
+		((SkyboxMaterial*)material)->texture_prem_0->cubemapFromHDRE(hdre, 1);
+		((SkyboxMaterial*)material)->texture_prem_1->cubemapFromHDRE(hdre, 2);
+		((SkyboxMaterial*)material)->texture_prem_2->cubemapFromHDRE(hdre, 3);
+		((SkyboxMaterial*)material)->texture_prem_3->cubemapFromHDRE(hdre, 4);
+		((SkyboxMaterial*)material)->texture_prem_4->cubemapFromHDRE(hdre, 5);
+	}
+}
 
 VolumeNode::VolumeNode()
 {
@@ -295,9 +295,35 @@ VolumeNode::VolumeNode()
 	mesh = new Mesh();
 	mesh->createCube();
 
-	color1 = Vector4(0.0 / 255.0, 42.0 / 255.0, 5.0 / 255.0, 255.0 / 255.0);
-	color2 = Vector4(29.0 / 255.0, 19.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0);
-	color3 = Vector4(100.0 / 255.0, 44.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0);
+	int_1 = 28;
+	int_2 = 62;
+	int_3 = 129;
+	num_intervals = 3;
+
+	color1 = Vector4(74 / 255.0, 49 / 255.0, 0 / 255.0, 255.0 / 255.0);
+	color2 = Vector4(11 / 255.0, 230 / 255.0, 35 / 255.0, 255.0 / 255.0);
+	color3 = Vector4(242 / 255.0, 11 / 255.0, 11 / 255.0, 255.0 / 255.0);
+
+	Color color1_ub = Color(color1.x * 255.0, color1.y * 255.0, color1.z * 255.0, color1.w * 255.0);
+	Color color2_ub = Color(color2.x * 255.0, color2.y * 255.0, color2.z * 255.0, color2.w * 255.0);
+	Color color3_ub = Color(color3.x * 255.0, color3.y * 255.0, color3.z * 255.0, color3.w * 255.0);
+	Color color4_ub = Color(color4.x * 255.0, color4.y * 255.0, color4.z * 255.0, color4.w * 255.0);
+	Image* image = new Image(129, 1, 4);
+	for (int i = 0; i < 129; i++)
+	{
+		if (i < int_1)
+			image->setPixel(i, 0, color1_ub);
+		else if (i < int_2)
+			image->setPixel(i, 0, color2_ub);
+		else if (i < int_3)
+			image->setPixel(i, 0, color3_ub);
+		else if (i < int_4)
+			image->setPixel(i, 0, color4_ub);
+	}
+	//image->flipY();
+	Texture* text = new Texture(image);
+
+	((VolumeMaterial*)material)->transfer_function = text;
 }
 
 void VolumeNode::renderInMenu()
@@ -419,26 +445,12 @@ void VolumeNode::renderInMenu()
 		((VolumeMaterial*)material)->threshold = thres;
 	}
 
-	if (num_intervals == 1)
+	if (num_intervals >= 1)
 		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
-	if (num_intervals == 2)
-	{
-		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
+	if (num_intervals >= 2)
 		ImGui::ColorEdit4("Color2", (float*)&color2); // Edit 4 floats representing a color and alpha channel
-	}
-	if (num_intervals == 3)
-	{
-		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
-		ImGui::ColorEdit4("Color2", (float*)&color2); // Edit 4 floats representing a color and alpha channel
+	if (num_intervals >= 3)
 		ImGui::ColorEdit4("Color3", (float*)&color3); // Edit 4 floats representing a color and alpha channel
-	}
-	if (num_intervals == 4)
-	{
-		ImGui::ColorEdit4("Color1", (float*)&color1); // Edit 4 floats representing a color and alpha channel
-		ImGui::ColorEdit4("Color2", (float*)&color2); // Edit 4 floats representing a color and alpha channel
-		ImGui::ColorEdit4("Color3", (float*)&color3); // Edit 4 floats representing a color and alpha channel
-		ImGui::ColorEdit4("Color4", (float*)&color4); // Edit 4 floats representing a color and alpha channel
-	}
 
 	if (ImGui::Button("Set Transfer Function", ImVec2(200.0, 20.0)))
 	{
@@ -458,10 +470,8 @@ void VolumeNode::renderInMenu()
 			else if (i < int_4)
 				image->setPixel(i, 0, color4_ub);
 		}
-		image->flipY();
+		//image->flipY();
 		Texture* text = new Texture(image);
-
-		image->saveTGA("data/text.tga");
 
 		((VolumeMaterial*)material)->transfer_function = text;
 	}

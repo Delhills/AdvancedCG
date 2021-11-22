@@ -44,30 +44,9 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
-	/*std::string geometry[5] = {"ball", "basic", "helmet", "bench", "lantern"};
-	BRDFlut = Texture::Get("data/brdfLUT.png", false, GL_CLAMP_TO_EDGE);
-	for (int i = 0; i < 5; ++i)
-	{
-		Texture::Get(("data/models/" + geometry[i] + "/albedo.png").c_str());
-		Texture::Get(("data/models/" + geometry[i] + "/normal.png").c_str());
-		Texture::Get(("data/models/" + geometry[i] + "/ao.png").c_str());
-		Texture::Get(("data/models/" + geometry[i] + "/emissive.png").c_str());
-		Texture::Get(("data/models/" + geometry[i] + "/opacity.png").c_str());
-		Texture::Get(("data/models/" + geometry[i] + "/metalness.png").c_str());
-		Texture::Get(("data/models/" + geometry[i] + "/roughness.png").c_str());
-	}*/
-
 	//Setting the default scene
 	{
-		/*ambient_light = Vector3(0.5, 0.5, 0.5);
-
-		sky = new Skybox();
-
-		Light* light = new Light();
-		light_list.push_back(light);
-
-		SceneNode* node = new SceneNode();
-		node_list.push_back(node);*/
+		ambient_light = Vector3(0.5, 0.5, 0.5);
 
 		VolumeNode* node = new VolumeNode();
 		node_list.push_back(node);
@@ -92,24 +71,12 @@ void Application::render(void)
 	//set the camera as default
 	camera->enable();
 
-	//render skybox
-	//glDisable(GL_DEPTH_TEST);
-	//sky->render(camera);
-
 	//set flags
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	//We create another list for the sorting because if we not do it the nodes will change their positions in ImGUI
-	std::vector<SceneNode*>list_node = node_list;
-	/*if (camera)
-		std::sort(list_node.begin(), list_node.end(), compareNodes);*/
-
-	for (size_t i = 0; i < list_node.size(); i++) {
-		list_node[i]->render(camera);
-
-		if(render_wireframe)
-			list_node[i]->renderWireframe(camera);
+	for (size_t i = 0; i < node_list.size(); i++) {
+		node_list[i]->render(camera);
 	}
 
 	//Draw the floor grid

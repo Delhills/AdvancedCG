@@ -412,29 +412,6 @@ VolumeMaterial::VolumeMaterial()
 	intensity = 1.0;
 	clipping_plane = Vector4(0.5, 0.5, 0.5, -1.5);
 	threshold = 0.1;
-
-	Image* image = new Image(129, 1, 4);
-	for (int i = 0; i < 129; i++)
-	{
-		if (i < 25)
-		{
-			Color color = Color(0.0, 42.0, 5.0);
-			image->setPixel(i, 0, color);
-		}
-		else if (i < 55)
-		{
-			Color color = Color(29.0, 19.0, 0.0);
-			image->setPixel(i, 0, color);
-		}
-		else
-		{
-			Color color = Color(100.0, 44.0, 0.0);
-			image->setPixel(i, 0, color);
-		}
-	}
-	Texture* text = new Texture(image);
-
-	transfer_function = text;// Texture::Get("data/volumes/teapot.png", true, GL_CLAMP_TO_EDGE);
 }
 
 VolumeMaterial::~VolumeMaterial()
