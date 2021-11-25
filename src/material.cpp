@@ -397,21 +397,21 @@ void PBRMaterial::setTexture(std::string geometry, int mesh)
 
 VolumeMaterial::VolumeMaterial()
 {
-	Volume* volume = new Volume();
-	volume->loadPNG("data/volumes/teapot_16_16.png");
+	//Create texture
 	texture = new Texture();
-	texture->create3DFromVolume(volume);
 
 	//Set Volume shader
 	shader = Shader::Get("data/shaders/basic.vs", "data/shaders/volume.fs");
-
-	//Set noise texture
-	noise = Texture::Get("data/blueNoise.png");
-
+	
+	//Set default parameters
 	step = 0.01;
 	intensity = 1.0;
 	clipping_plane = Vector4(0.5, 0.5, 0.5, -1.5);
-	threshold = 0.1;
+	transfer_function = NULL;
+
+	check_jittering = false;
+	check_transfer_function = false;
+	check_clipping_plane = false;
 }
 
 VolumeMaterial::~VolumeMaterial()
@@ -423,23 +423,17 @@ void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 	//upload node uniforms
 	StandardMaterial::setUniforms(camera, model);
 
-	shader->setUniform("u_inv_model", model.inverse());
-	shader->setUniform("u_inv_viewprojection", camera->viewprojection_matrix.inverse());
+	//Set parameters
 	shader->setUniform("u_intensity", intensity);
 	shader->setUniform("u_step_length", step);
 	shader->setUniform("u_clipping_plane", clipping_plane);
-	shader->setUniform("u_noise_texture", noise, 1);
 
-	//Pass light parameters
-	std::vector< Light* > lights = Application::instance->light_list;
-	shader->setUniform("u_light_ambient", Application::instance->ambient_light); //Pass ambient light for the first pass
-	shader->setUniform("u_light_position", lights[0]->model.getTranslation());
-	shader->setUniform("u_light_diffuse", lights[0]->diffuse);
-	shader->setUniform("u_light_specular", lights[0]->specular);
-
+	//Visualization info
 	shader->setUniform("u_threshold", threshold);
-	shader->setUniform("u_texture_lut", transfer_function, 5);
+	shader->setUniform("u_noise_texture", Application::instance->noise, 1);
+	shader->setUniform("u_texture_lut", transfer_function, 2);
 
+	//Check for options
 	shader->setUniform("u_jittering", check_jittering);
 	shader->setUniform("u_transfer_function", check_transfer_function);
 	shader->setUniform("u_clipping_plane_check", check_clipping_plane);
@@ -447,16 +441,143 @@ void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 
 void VolumeMaterial::renderInMenu()
 {
+	//Use jittering
 	ImGui::Checkbox("Jittering", &check_jittering);
+
+	//Use transfer function
 	ImGui::Checkbox("Transfer Function", &check_transfer_function);
+	if (check_transfer_function)
+	{
+		if (num_intervals >= 1)
+			ImGui::ColorEdit4("Color1", (float*)&color1); //Edit 4 floats representing a color and alpha channel
+		if (num_intervals >= 2)
+			ImGui::ColorEdit4("Color2", (float*)&color2); //Edit 4 floats representing a color and alpha channel
+		if (num_intervals >= 3)
+			ImGui::ColorEdit4("Color3", (float*)&color3); //Edit 4 floats representing a color and alpha channel
+
+		//Set a new transfer function with the actual colors
+		if (ImGui::Button("Set Transfer Function", ImVec2(200.0, 20.0)))
+			setTransferFunction();
+	}
+
+	//Use clipping plane
 	ImGui::Checkbox("Clipping Plane", &check_clipping_plane);
 	if (check_clipping_plane)
-		ImGui::DragFloat4("Clipping Plane", (float*)&clipping_plane, 0.01f); // Edit 4 floats representing a color and alpha channel
+		ImGui::DragFloat4("Clipping Plane", (float*)&clipping_plane, 0.01f); //Edit 4 floats representing the plane
 
-	ImGui::ColorEdit4("Color", (float*)&color); // Edit 4 floats representing a color and alpha channel
-	ImGui::SliderFloat("Step Length", (float*)&step, 0.001f, 0.1f);
-	ImGui::SliderFloat("Intensity", (float*)&intensity, 0.0f, 100.0f);
-	ImGui::SliderFloat("Threshold", (float*)&threshold, 0.001f, 1.0f);
+	//More parameters
+	if (ImGui::TreeNode("Material"))
+	{
+		ImGui::ColorEdit4("Color", (float*)&color); //Edit 4 floats representing a color and alpha channel
+		ImGui::SliderFloat("Step Length", (float*)&step, 0.001f, 0.1f);
+		ImGui::SliderFloat("Intensity", (float*)&intensity, 0.0f, 100.0f);
+		ImGui::SliderFloat("Threshold", (float*)&threshold, 0.001f, 1.0f);
+	}
+}
+
+void VolumeMaterial::setTransferFunction()
+{
+	//Pass from Vector4 (0.0-1.0) to Color (0-255)
+	Color color1_ub = Color(color1.x * 255, color1.y * 255, color1.z * 255, color1.w * 255);
+	Color color2_ub = Color(color2.x * 255, color2.y * 255, color2.z * 255, color2.w * 255);
+	Color color3_ub = Color(color3.x * 255, color3.y * 255, color3.z * 255, color3.w * 255);
+
+	//Create image for the texture and set the colors by interval
+	Image* image = new Image(129, 1, 4);
+	for (int i = 0; i < 129; i++)
+	{
+		if (i < int_1)
+			image->setPixel(i, 0, color1_ub);
+		else if (i < int_2)
+			image->setPixel(i, 0, color2_ub);
+		else if (i < int_3)
+			image->setPixel(i, 0, color3_ub);
+	}
+
+	//Create texture
+	Texture* text = new Texture(image);
+	
+	//Destroy old texture
+	if (transfer_function)
+		transfer_function->~Texture(); 
+	
+	//Set new transfer function
+	transfer_function = text;
+}
+
+void VolumeMaterial::setVolumeProperties(int vol)
+{
+	//Create new volume
+	Volume* volume = new Volume();
+
+	//Set parameters depending on selected volume
+	switch (vol)
+	{
+	case 0: 
+		volume->loadPNG("data/volumes/bonsai_16_16.png");
+		threshold = 0.13;
+		int_1 = 25;
+		int_2 = 55;
+		int_3 = 129;
+		num_intervals = 3;
+		color1 = Vector4(1 / 255.0, 107 / 255.0, 12 / 255.0, 255.0 / 255.0);
+		color2 = Vector4(74 / 255.0, 51 / 255.0, 0 / 255.0, 255.0 / 255.0);
+		color3 = Vector4(255 / 255.0, 114 / 255.0, 0 / 255.0, 255.0 / 255.0);
+		break;
+	case 1: 
+		volume->loadPVM("data/volumes/CT-Abdomen.pvm");
+		threshold = 0.075;
+		int_1 = 31;
+		int_2 = 48;
+		int_3 = 129;
+		num_intervals = 3;
+		color1 = Vector4(192 / 255.0, 152 / 255.0, 93 / 255.0, 255.0 / 255.0);
+		color2 = Vector4(164 / 255.0, 6 / 255.0, 6 / 255.0, 255.0 / 255.0);
+		color3 = Vector4(255 / 255.0, 255 / 255.0, 255 / 255.0, 255.0 / 255.0);
+		break;
+	case 2: 
+		volume->loadPVM("data/volumes/Daisy.pvm");
+		threshold = 0.0;
+		int_1 = 129;
+		num_intervals = 1;
+		color1 = Vector4(95 / 255.0, 8 / 255.0, 187 / 255.0, 255.0 / 255.0);
+		break;
+	case 3: 
+		volume->loadPNG("data/volumes/foot_16_16.png");
+		threshold = 0.02;
+		int_1 = 42;
+		int_2 = 129;
+		num_intervals = 2;
+		color1 = Vector4(192 / 255.0, 152 / 255.0, 93 / 255.0, 255.0 / 255.0);
+		color2 = Vector4(255 / 255.0, 255 / 255.0, 255 / 255.0, 255.0 / 255.0);
+		break;
+	case 4: 
+		volume->loadPVM("data/volumes/Orange.pvm");
+		threshold = 0.02;
+		int_1 = 26;
+		int_2 = 129;
+		num_intervals = 2;
+		color1 = Vector4(255 / 255.0, 114 / 255.0, 0 / 255.0, 255.0 / 255.0);
+		color2 = Vector4(189 / 255.0, 158 / 255.0, 33 / 255.0, 255.0 / 255.0);
+		break;
+	case 5: 
+		volume->loadPNG("data/volumes/teapot_16_16.png");
+		threshold = 0.1;
+		int_1 = 28;
+		int_2 = 62;
+		int_3 = 129;
+		num_intervals = 3;
+		color1 = Vector4(74 / 255.0, 49 / 255.0, 0 / 255.0, 255.0 / 255.0);
+		color2 = Vector4(11 / 255.0, 230 / 255.0, 35 / 255.0, 255.0 / 255.0);
+		color3 = Vector4(242 / 255.0, 11 / 255.0, 11 / 255.0, 255.0 / 255.0);
+		break;
+	}
+
+	//Create 3D texture
+	texture->create3DFromVolume(volume);
+
+	//Set new transfer function
+	setTransferFunction();
 }
 
 VolumeMaterialPhong::VolumeMaterialPhong()
@@ -481,6 +602,13 @@ void VolumeMaterialPhong::setUniforms(Camera* camera, Matrix44 model)
 	//upload node uniforms
 	VolumeMaterial::setUniforms(camera, model);
 
+	//Pass light parameters
+	Light* light = Application::instance->light_list[0];
+	shader->setUniform("u_light_ambient", Application::instance->ambient_light); //Pass ambient light for the first pass
+	shader->setUniform("u_light_position", light->model.getTranslation());
+	shader->setUniform("u_light_diffuse", light->diffuse);
+	shader->setUniform("u_light_specular", light->specular);
+
 	//Upload material related uniforms
 	shader->setUniform("u_material_ambient", ambient);
 	shader->setUniform("u_material_diffuse", diffuse);
@@ -490,9 +618,12 @@ void VolumeMaterialPhong::setUniforms(Camera* camera, Matrix44 model)
 
 void VolumeMaterialPhong::renderInMenu()
 {
+	//Render parameters in menu
 	ImGui::ColorEdit3("Ambient", (float*)&ambient); // Edit 3 floats representing a color
 	ImGui::ColorEdit3("Diffuse", (float*)&diffuse); // Edit 3 floats representing a color
 	ImGui::ColorEdit3("Specular", (float*)&specular); // Edit 3 floats representing a color
 	ImGui::DragFloat("Shininess", (float*)&shininess, 1.0f, 1.0f, 256.f);
+
+	//Render VolumeMaterial menu
 	VolumeMaterial::renderInMenu();
 }

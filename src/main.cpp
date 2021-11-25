@@ -117,13 +117,6 @@ void renderGUI(SDL_Window* window, Application * game)
 			unsigned int count = 0;
 			std::stringstream ss;
 
-			//Add light to the scene
-			if (ImGui::Button("Add Light", ImVec2(200.0, 20.0)))
-			{
-				Light* light = new Light();
-				game->light_list.push_back(light);
-			}
-
 			for (auto& node : game->light_list)
 			{
 				ss << count;

@@ -133,19 +133,29 @@ public:
 	float intensity;
 	float step;
 	Texture* transfer_function;
-	Texture* noise;
 	Vector4 clipping_plane;
 	float threshold;
 
-	bool check_jittering = false;
-	bool check_transfer_function = false;
-	bool check_clipping_plane = false;
+	bool check_jittering;
+	bool check_transfer_function;
+	bool check_clipping_plane;
+
+	int num_intervals;
+	int int_1;
+	int int_2;
+	int int_3;
+
+	Vector4 color1;
+	Vector4 color2;
+	Vector4 color3;
 
 	VolumeMaterial();
 	~VolumeMaterial();
 
 	void setUniforms(Camera* camera, Matrix44 model);
 	void renderInMenu();
+	void setTransferFunction();
+	void setVolumeProperties(int vol);
 };
 
 class VolumeMaterialPhong : public VolumeMaterial {

@@ -8,9 +8,8 @@ varying vec4 v_color;
 
 uniform sampler3D u_texture;
 uniform sampler2D u_noise_texture;
+uniform sampler2D u_texture_lut;
 
-uniform mat4 u_inv_model;
-uniform mat4 u_inv_viewprojection;
 uniform vec3 u_camera_position;
 uniform vec4 u_color;
 uniform vec4 u_clipping_plane;
@@ -18,8 +17,6 @@ uniform vec4 u_clipping_plane;
 uniform float u_intensity;
 uniform float u_step_length;
 uniform float u_threshold;
-
-uniform sampler2D u_texture_lut;
 
 uniform bool u_jittering;
 uniform bool u_transfer_function;
@@ -32,6 +29,7 @@ void main(){
 	vec3 stepVector = ray_dir * u_step_length;
 	vec3 samplePos = v_position;
 
+	// Add jittering
 	if (u_jittering)
 	{
 		vec2 uv_noise = vec2(gl_FragCoord.xy / 128.0);
@@ -39,11 +37,13 @@ void main(){
 		samplePos += stepVector * noise_value;
 	}
 
+	// Define final color
 	vec4 finalColor = vec4(0.0);
 
 	// Ray loop
-	for(int i = 0; i < MAX_ITERATIONS; i++){
-
+	for(int i = 0; i < MAX_ITERATIONS; i++)
+	{
+		// Check clipping plane		
 		bool compute = true;
 		if (u_clipping_plane_check)
 			compute = (u_clipping_plane.x * samplePos.x + u_clipping_plane.y * samplePos.y + u_clipping_plane.z * samplePos.z + u_clipping_plane.w <= 0);
@@ -56,14 +56,13 @@ void main(){
 
 			// 3. Classification
 			vec4 sampleColor;
-			if (u_transfer_function) 
-				{ sampleColor = texture2D(u_texture_lut, vec2(d, 0.5)); sampleColor.xyz *= sampleColor.w; }
+			if (u_transfer_function) //Apply transfer function
+				{ sampleColor = texture2D(u_texture_lut, vec2(d, 0.5)); sampleColor.xyz *= sampleColor.w; } //Bleeding applied
 			else
-				sampleColor = vec4(d);
+				sampleColor = vec4(d); //Simple classification
 
 			// 4. Composition
-			//sampleColor.xyz *= sampleColor.w;
-			if (d > u_threshold)
+			if (d > u_threshold) 
 				finalColor += u_step_length * (1.0 - finalColor.w) * sampleColor;
 		}
 

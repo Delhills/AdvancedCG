@@ -34,6 +34,7 @@ public:
 
 	Vector3 ambient_light; //Ambient light vector
 	Texture* BRDFlut; //LUT
+	Texture* noise;
 
 	//window
 	SDL_Window* window;
