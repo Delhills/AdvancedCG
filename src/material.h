@@ -132,19 +132,20 @@ public:
 
 	float intensity;
 	float step;
-	Texture* transfer_function;
 	Vector4 clipping_plane;
 	float threshold;
 
+	//Options
 	bool check_jittering;
 	bool check_transfer_function;
 	bool check_clipping_plane;
 
+	//Transfer function
+	Texture* transfer_function;
 	int num_intervals;
 	int int_1;
 	int int_2;
 	int int_3;
-
 	Vector4 color1;
 	Vector4 color2;
 	Vector4 color3;

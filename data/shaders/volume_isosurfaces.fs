@@ -70,7 +70,7 @@ void main(){
 			{
 				// Define gradient and h
 				vec3 grad = vec3(0.0);
-				float h = 0.001;
+				float h = 0.01;
 
 				//Compute gradient
 				vec3 text_coords1_x = (vec3(samplePos.x + h, samplePos.y, samplePos.z) + 1.0) / 2.0;
