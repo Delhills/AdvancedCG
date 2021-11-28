@@ -34,11 +34,14 @@ uniform bool u_jittering;
 uniform bool u_transfer_function;
 uniform bool u_clipping_plane_check;
 
+uniform float u_h;
+uniform bool u_normals;
+
 void main(){
 
 	// 1. Ray setup
-	vec3 ray_dir = normalize(v_world_position - u_camera_position);
-	ray_dir = (u_inv_model * vec4( ray_dir, 1.0) ).xyz;
+	vec3 camera_localpos = (u_inv_model * vec4( u_camera_position, 1.0) ).xyz; //Transform to local coordinates
+	vec3 ray_dir = normalize(v_position - camera_localpos);
 
 	vec3 stepVector = ray_dir * u_step_length;
 	vec3 samplePos = v_position; 
@@ -71,33 +74,41 @@ void main(){
 			// 3. Classification and shading
 			if (d > u_threshold)
 			{
-				// Define gradient and h
+				// Define normal
 				vec3 grad = vec3(0.0);
-				float h = 0.01;
 
 				//Compute gradient
-				vec3 text_coords1_x = (vec3(samplePos.x + h, samplePos.y, samplePos.z) + 1.0) / 2.0;
+				vec3 text_coords1_x = (vec3(samplePos.x + u_h, samplePos.y, samplePos.z) + 1.0) / 2.0;
 				float dx1 = texture3D(u_texture, text_coords1_x).x;
 
-				vec3 text_coords2_x = (vec3(samplePos.x - h, samplePos.y, samplePos.z) + 1.0) / 2.0;
+				vec3 text_coords2_x = (vec3(samplePos.x - u_h, samplePos.y, samplePos.z) + 1.0) / 2.0;
 				float dx2 = texture3D(u_texture, text_coords2_x).x;
 
-				vec3 text_coords1_y = (vec3(samplePos.x, samplePos.y + h, samplePos.z) + 1.0) / 2.0;
+				vec3 text_coords1_y = (vec3(samplePos.x, samplePos.y + u_h, samplePos.z) + 1.0) / 2.0;
 				float dy1 = texture3D(u_texture, text_coords1_y).x;
 
-				vec3 text_coords2_y = (vec3(samplePos.x, samplePos.y - h, samplePos.z) + 1.0) / 2.0;
+				vec3 text_coords2_y = (vec3(samplePos.x, samplePos.y - u_h, samplePos.z) + 1.0) / 2.0;
 				float dy2 = texture3D(u_texture, text_coords2_y).x;
 
-				vec3 text_coords1_z = (vec3(samplePos.x, samplePos.y, samplePos.z + h) + 1.0) / 2.0;
+				vec3 text_coords1_z = (vec3(samplePos.x, samplePos.y, samplePos.z + u_h) + 1.0) / 2.0;
 				float dz1 = texture3D(u_texture, text_coords1_z).x;
 
-				vec3 text_coords2_z = (vec3(samplePos.x, samplePos.y, samplePos.z - h) + 1.0) / 2.0;
+				vec3 text_coords2_z = (vec3(samplePos.x, samplePos.y, samplePos.z - u_h) + 1.0) / 2.0;
 				float dz2 = texture3D(u_texture, text_coords2_z).x;
 
-				grad.x = 1.0 / (2.0 * h) * (dx2 - dx1);
-				grad.y = 1.0 / (2.0 * h) * (dy2 - dy1);
-				grad.z = 1.0 / (2.0 * h) * (dz2 - dz1);
-				grad = normalize(grad);
+				//Applying the negative of the gradient to get the normals
+				grad.x = 1.0 / (2.0 * u_h) * (dx2 - dx1);
+				grad.y = 1.0 / (2.0 * u_h) * (dy2 - dy1);
+				grad.z = 1.0 / (2.0 * u_h) * (dz2 - dz1);
+				grad = normalize(grad); //Normalize as the normals
+
+				//Visualize normals
+				if (u_normals)
+				{
+					//assign the normals to the output
+					finalColor = vec4(grad, 1.0);
+					break;
+				}
 
 				//PHONG
 				vec4 color;
@@ -144,6 +155,6 @@ void main(){
 			break;
 }
 
-	//7. Final color
+	//6. Final color
 	gl_FragColor = finalColor;
 }

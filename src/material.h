@@ -166,6 +166,8 @@ public:
 	Vector3 diffuse;
 	Vector3 specular;
 	float shininess;
+	float h;
+	bool normals;
 
 	VolumeMaterialPhong();
 	~VolumeMaterialPhong();

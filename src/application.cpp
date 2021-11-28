@@ -44,8 +44,10 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 	camera->lookAt(Vector3(5.f, 5.f, 5.f), Vector3(0.f, 0.0f, 0.f), Vector3(0.f, 1.f, 0.f));
 	camera->setPerspective(45.f,window_width/(float)window_height,0.1f,10000.f); //set the projection, we want to be perspective
 
+	//Load noise texture
 	noise = Texture::Get("data/blueNoise.png");
 
+	//Load all volumes
 	Volume::Get("data/volumes/bonsai_16_16.png", PNG_VOL);
 	Volume::Get("data/volumes/CT-Abdomen.pvm", PVM_VOL);
 	Volume::Get("data/volumes/Daisy.pvm", PVM_VOL);
@@ -97,14 +99,6 @@ void Application::update(double seconds_elapsed)
 {
 	float speed = seconds_elapsed * 10; //the speed is defined by the seconds_elapsed so it goes constant
 	float orbit_speed = seconds_elapsed * 1;
-
-	for (int i = 0; i < node_list.size(); i++)
-	{
-		SceneNode* node = node_list[i];
-		BoundingBox world_bounding = transformBoundingBox(node->model, node->mesh->box);
-		if (camera)
-			node->distance_to_cam = camera->eye.distance(world_bounding.center);
-	}
 	
 	//example
 	float angle = seconds_elapsed * 10.f * DEG2RAD;

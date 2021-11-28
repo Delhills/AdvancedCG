@@ -34,7 +34,7 @@ public:
 
 	Vector3 ambient_light; //Ambient light vector
 	Texture* BRDFlut; //LUT
-	Texture* noise;
+	Texture* noise; //Noise texture for jittering
 
 	//window
 	SDL_Window* window;

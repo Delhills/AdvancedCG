@@ -7,6 +7,8 @@
 unsigned int SceneNode::lastNameId = 0;
 unsigned int Light::lastLightId = 0;
 unsigned int environment_selected = 0;
+
+//Since there is only one node, set these parameters as global
 unsigned int volume_selected = 5;
 bool isourface = false;
 
@@ -129,7 +131,6 @@ void Light::renderInMenu()
 	//Phong parameters
 	ImGui::ColorEdit3("Diffuse Color", (float*)&diffuse); // Edit 3 floats representing a color
 	ImGui::ColorEdit3("Specular Color", (float*)&specular); // Edit 3 floats representing a color
-	ImGui::TreePop();
 }
 
 Skybox::Skybox()
