@@ -6,6 +6,8 @@ varying vec3 v_normal;
 varying vec2 v_uv;
 varying vec4 v_color;
 
+uniform mat4 u_inv_model;
+
 uniform sampler3D u_texture;
 uniform sampler2D u_noise_texture;
 uniform sampler2D u_texture_lut;
@@ -26,8 +28,10 @@ void main(){
 
 	// 1. Ray setup
 	vec3 ray_dir = normalize(v_world_position - u_camera_position);
+	ray_dir = (u_inv_model * vec4( ray_dir, 1.0) ).xyz;
+
 	vec3 stepVector = ray_dir * u_step_length;
-	vec3 samplePos = v_position;
+	vec3 samplePos = v_position; 
 
 	// Add jittering
 	if (u_jittering)

@@ -46,6 +46,13 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 
 	noise = Texture::Get("data/blueNoise.png");
 
+	Volume::Get("data/volumes/bonsai_16_16.png", PNG_VOL);
+	Volume::Get("data/volumes/CT-Abdomen.pvm", PVM_VOL);
+	Volume::Get("data/volumes/Daisy.pvm", PVM_VOL);
+	Volume::Get("data/volumes/foot_16_16.png", PNG_VOL);
+	Volume::Get("data/volumes/Orange.pvm", PVM_VOL);
+	Volume::Get("data/volumes/teapot_16_16.png", PNG_VOL);
+
 	//Setting the default scene
 	{
 		ambient_light = Vector3(0.25, 0.25, 0.25);

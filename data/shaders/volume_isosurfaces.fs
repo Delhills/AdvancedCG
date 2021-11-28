@@ -15,6 +15,7 @@ uniform vec4 u_color;
 uniform vec4 u_clipping_plane;
 
 uniform mat4 u_model;
+uniform mat4 u_inv_model;
 
 uniform float u_step_length;
 uniform float u_threshold;
@@ -37,8 +38,10 @@ void main(){
 
 	// 1. Ray setup
 	vec3 ray_dir = normalize(v_world_position - u_camera_position);
+	ray_dir = (u_inv_model * vec4( ray_dir, 1.0) ).xyz;
+
 	vec3 stepVector = ray_dir * u_step_length;
-	vec3 samplePos = v_position;
+	vec3 samplePos = v_position; 
 
 	// Add jittering
 	if (u_jittering)
@@ -99,33 +102,37 @@ void main(){
 				//PHONG
 				vec4 color;
 				if (u_transfer_function) //Apply transfer function
-					{ color = texture2D(u_texture_lut, vec2(d, 0.5)); color.xyz *= color.w; }
+					{ color = texture2D(u_texture_lut, vec2(d, 0.5)); }
 				else
 					color = u_color; //Simple shading
-	
-				//Defining the world position at the sample position
-				vec3 world_position = (u_model * vec4( samplePos, 1.0) ).xyz;
 
-				//PHONG computations
-				vec3 Ka = u_material_ambient * color.xyz;
-				vec3 Kd = u_material_diffuse * color.xyz;
-				vec3 Ks = u_material_specular * color.xyz * color.w;
+				if (color.w == 1.0)
+				{
+					//Defining the world position at the sample position
+					vec3 world_position = (u_model * vec4( samplePos, 1.0) ).xyz;
 
-				vec3 KaIa = u_light_ambient * Ka;
+					//PHONG computations
+					vec3 Ka = u_material_ambient * color.xyz;
+					vec3 Kd = u_material_diffuse * color.xyz;
+					vec3 Ks = u_material_specular * color.xyz * color.w;
 
-				vec3 L = normalize(u_light_position - world_position);
-				float LdotN = clamp(dot(grad, L), 0.0, 1.0);
-				vec3 diff = LdotN * (Kd * u_light_diffuse);
+					vec3 KaIa = u_light_ambient * Ka;
 
-				vec3 V = normalize(u_camera_position - world_position);
-				vec3 R = reflect(-L, grad);
-				float RV = pow(max(dot(V, R), 0.0), u_material_shininess);
-				vec3 spec = RV * Ks * u_light_specular;
+					vec3 L = normalize(u_light_position - world_position);
+					float LdotN = clamp(dot(grad, L), 0.0, 1.0);
+					vec3 diff = LdotN * (Kd * u_light_diffuse);
 
-				vec3 illumination = (KaIa + diff + spec);
+					vec3 V = normalize(u_camera_position - world_position);
+					vec3 R = reflect(-L, grad);
+					float RV = pow(max(dot(V, R), 0.0), u_material_shininess);
+					vec3 spec = RV * Ks * u_light_specular;
 
-				//assign the color to the output
-				finalColor = vec4(illumination, color.w);
+					vec3 illumination = (KaIa + diff + spec);
+
+					//assign the color to the output
+					finalColor = vec4(illumination, 1.0);
+					break;
+				}
 			}
 		}
 		

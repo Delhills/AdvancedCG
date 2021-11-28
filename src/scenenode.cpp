@@ -17,7 +17,7 @@ SceneNode::SceneNode()
 
 	//Set material
 	material = new VolumeMaterial();
-	((VolumeMaterial*)material)->setVolumeProperties(volume_selected);
+	((VolumeMaterial*)material)->setVolumeProperties(volume_selected, model);
 	
 	//Set mesh
 	mesh = new Mesh();
@@ -32,7 +32,7 @@ SceneNode::SceneNode(const char * name)
 
 	//Set material
 	material = new VolumeMaterial();
-	((VolumeMaterial*)material)->setVolumeProperties(volume_selected);
+	((VolumeMaterial*)material)->setVolumeProperties(volume_selected, model);
 
 	//Set mesh
 	mesh = new Mesh();
@@ -80,11 +80,12 @@ void SceneNode::renderInMenu()
 	if (changed)
 	{
 		//Set new volume properties
-		((VolumeMaterial*)material)->setVolumeProperties(volume_selected);
+		((VolumeMaterial*)material)->setVolumeProperties(volume_selected, model);
 	}
 
 	//Isosurface mode
-	changed |= ImGui::Checkbox("Isosurface", &isourface);
+	changed = false;
+	changed |= ImGui::Checkbox("Isosurface", (bool*)&isourface);
 	if (changed)
 	{
 		//Set material
@@ -94,7 +95,7 @@ void SceneNode::renderInMenu()
 			material = new VolumeMaterial();
 
 		//Set properties
-		((VolumeMaterial*)material)->setVolumeProperties(volume_selected);
+		((VolumeMaterial*)material)->setVolumeProperties(volume_selected, model);
 	}
 
 	//Render material menu

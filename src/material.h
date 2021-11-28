@@ -156,7 +156,7 @@ public:
 	void setUniforms(Camera* camera, Matrix44 model);
 	void renderInMenu();
 	void setTransferFunction();
-	void setVolumeProperties(int vol);
+	void setVolumeProperties(int vol, Matrix44& model);
 };
 
 class VolumeMaterialPhong : public VolumeMaterial {

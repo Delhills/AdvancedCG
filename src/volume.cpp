@@ -5,6 +5,8 @@
 #include "extra/pvmparser.h"
 #include "extra/PerlinNoise.hpp"
 
+std::map<std::string, Volume*> Volume::sVolumesLoaded;
+
 Volume::Volume() {
 	width = height = depth = 0;
 	widthSpacing = heightSpacing = depthSpacing = 1.0; 
@@ -328,4 +330,45 @@ void Volume::fillWorleyNoise(unsigned int cellsPerSide, unsigned int channel) {
 	}
 
 	delete _distances;
+}
+
+Volume* Volume::Get(const char* filename, VolType type)
+{
+	assert(filename);
+
+	//check if loaded
+	auto it = sVolumesLoaded.find(filename);
+	if (it != sVolumesLoaded.end())
+		return it->second;
+
+	//load it
+	Volume* volume = new Volume();
+	if (type == PNG_VOL)
+	{
+		if (!volume->loadPNG(filename))
+		{
+			delete volume;
+			return NULL;
+		}
+	}
+	if (type == PVM_VOL)
+	{
+		if (!volume->loadPVM(filename))
+		{
+			delete volume;
+			return NULL;
+		}
+	}
+	if (type == VL_VOL)
+	{
+		if (!volume->loadVL(filename))
+		{
+			delete volume;
+			return NULL;
+		}
+	}
+
+	volume->setName(filename);
+
+	return volume;
 }

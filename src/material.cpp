@@ -437,6 +437,11 @@ void VolumeMaterial::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_jittering", check_jittering);
 	shader->setUniform("u_transfer_function", check_transfer_function);
 	shader->setUniform("u_clipping_plane_check", check_clipping_plane);
+
+	//Inverse model
+	Matrix44 inv_model = model;
+	inv_model.inverse();
+	shader->setUniform("u_inv_model", inv_model);
 }
 
 void VolumeMaterial::renderInMenu()
@@ -505,16 +510,16 @@ void VolumeMaterial::setTransferFunction()
 	transfer_function = text;
 }
 
-void VolumeMaterial::setVolumeProperties(int vol)
+void VolumeMaterial::setVolumeProperties(int vol, Matrix44& model)
 {
 	//Create new volume
-	Volume* volume = new Volume();
+	Volume* volume;
 
 	//Set parameters depending on selected volume
 	switch (vol)
 	{
 	case 0: 
-		volume->loadPNG("data/volumes/bonsai_16_16.png");
+		volume = Volume::Get("data/volumes/bonsai_16_16.png", PNG_VOL);
 		threshold = 0.13;
 		int_1 = 25;
 		int_2 = 55;
@@ -525,7 +530,7 @@ void VolumeMaterial::setVolumeProperties(int vol)
 		color3 = Vector4(255 / 255.0, 114 / 255.0, 0 / 255.0, 255.0 / 255.0);
 		break;
 	case 1: 
-		volume->loadPVM("data/volumes/CT-Abdomen.pvm");
+		volume = Volume::Get("data/volumes/CT-Abdomen.pvm", PVM_VOL);
 		threshold = 0.075;
 		int_1 = 31;
 		int_2 = 48;
@@ -536,15 +541,15 @@ void VolumeMaterial::setVolumeProperties(int vol)
 		color3 = Vector4(255 / 255.0, 255 / 255.0, 255 / 255.0, 255.0 / 255.0);
 		break;
 	case 2: 
-		volume->loadPVM("data/volumes/Daisy.pvm");
+		volume = Volume::Get("data/volumes/Daisy.pvm", PVM_VOL);
 		threshold = 0.0;
 		int_1 = 129;
 		num_intervals = 1;
 		color1 = Vector4(95 / 255.0, 8 / 255.0, 187 / 255.0, 255.0 / 255.0);
 		break;
 	case 3: 
-		volume->loadPNG("data/volumes/foot_16_16.png");
-		threshold = 0.02;
+		volume = Volume::Get("data/volumes/foot_16_16.png", PNG_VOL);
+		threshold = 0.06;
 		int_1 = 42;
 		int_2 = 129;
 		num_intervals = 2;
@@ -552,8 +557,8 @@ void VolumeMaterial::setVolumeProperties(int vol)
 		color2 = Vector4(255 / 255.0, 255 / 255.0, 255 / 255.0, 255.0 / 255.0);
 		break;
 	case 4: 
-		volume->loadPVM("data/volumes/Orange.pvm");
-		threshold = 0.02;
+		volume = Volume::Get("data/volumes/Orange.pvm", PVM_VOL);
+		threshold = 0.06;
 		int_1 = 26;
 		int_2 = 129;
 		num_intervals = 2;
@@ -561,7 +566,7 @@ void VolumeMaterial::setVolumeProperties(int vol)
 		color2 = Vector4(189 / 255.0, 158 / 255.0, 33 / 255.0, 255.0 / 255.0);
 		break;
 	case 5: 
-		volume->loadPNG("data/volumes/teapot_16_16.png");
+		volume = Volume::Get("data/volumes/teapot_16_16.png", PNG_VOL);
 		threshold = 0.1;
 		int_1 = 28;
 		int_2 = 62;
@@ -572,6 +577,12 @@ void VolumeMaterial::setVolumeProperties(int vol)
 		color3 = Vector4(242 / 255.0, 11 / 255.0, 11 / 255.0, 255.0 / 255.0);
 		break;
 	}
+
+	float width_size = volume->width * volume->widthSpacing;
+	float height_size = volume->height * volume->heightSpacing;
+	float depth_size = volume->depth * volume->depthSpacing;
+	float max_size = max(width_size, max(height_size, depth_size));
+	model.setScale(width_size / max_size, height_size / max_size, depth_size / max_size);
 
 	//Create 3D texture
 	texture->create3DFromVolume(volume);

@@ -4,6 +4,16 @@
 
 #include "includes.h"
 #include "framework.h"
+#include <map>
+#include <string>
+
+
+enum VolType : uint8
+{
+	VL_VOL,
+	PVM_VOL,
+	PNG_VOL
+};
 
 //Class to represent a volume
 class Volume
@@ -22,6 +32,9 @@ public:
 	unsigned int voxelType;		//0: unsigned int, 1: int, 2: float, 3: other
 
 	Uint8* data; //bytes with the pixel information
+
+	//volumes manager
+	static std::map<std::string, Volume*> sVolumesLoaded;
 
 	Volume();
 	Volume(unsigned int w, unsigned int h, unsigned int d, unsigned int channels = 1, unsigned int bytes = 1, unsigned int type = 0);
@@ -43,6 +56,10 @@ public:
 	void fillSphere();
 	void fillNoise(float frequency, int octaves, unsigned int seed, unsigned int channel = 1); //Channel 1 for R to 4 for A
 	void fillWorleyNoise(unsigned int cellsPerSide = 4, unsigned int channel = 1); //Channel 1 for R to 4 for A
+
+	//load using the manager (caching loaded ones to avoid reloading them)
+	static Volume* Get(const char* filename, VolType type);
+	void setName(const char* name) { sVolumesLoaded[name] = this; }
 };
 
 #endif
